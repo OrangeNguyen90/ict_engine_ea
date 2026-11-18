@@ -1,0 +1,14 @@
+﻿PM	0	11:45:29.026	Tester	Cloud servers switched off
+KE	2	11:45:29.769	Tester	tester not started because the account is not specified
+KN	0	11:45:53.482	Tester	Cloud servers switched off
+PD	2	11:45:54.393	Tester	tester not started because the account is not specified
+RQ	0	11:45:27.681	Startup	successfully initialized from start config "E:\Project\ict_engine_ea\Tests\ict_range.ini"
+GH	0	11:45:27.754	Terminal	launched with E:\Project\ict_engine_ea\Tests\ict_range.ini
+QG	2	11:45:29.769	Tester	tester not started because the account is not specified
+GM	2	11:45:29.769	Terminal	tester didn't start
+NR	0	11:45:31.947	Terminal	shutdown with -1000012353 (tester not started because the account is not specified)
+FS	0	11:45:51.564	Startup	successfully initialized from start config "E:\Project\ict_engine_ea\Tests\ict_range_EURUSD_09.ini"
+MK	0	11:45:51.617	Terminal	launched with E:\Project\ict_engine_ea\Tests\ict_range_EURUSD_09.ini
+LF	2	11:45:54.393	Tester	tester not started because the account is not specified
+NM	2	11:45:54.393	Terminal	tester didn't start
+FR	0	11:45:56.825	Terminal	shutdown with -1000012353 (tester not started because the account is not specified)

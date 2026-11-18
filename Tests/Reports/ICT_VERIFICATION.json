@@ -1,0 +1,133 @@
+{
+    "SchemaVersion":  1,
+    "Scope":  "AccountFreeVerification",
+    "Status":  "Passed",
+    "StartedUtc":  "2026-11-09T09:45:30.1471256Z",
+    "CompletedUtc":  "2026-11-09T09:46:42.7047744Z",
+    "SelectedExperts":  [
+                            "ICTDecisionTests",
+                            "ICTDetectorTests",
+                            "ICTRangeTests",
+                            "ICTRangeReplayEA",
+                            "Phase3ProbeEA",
+                            "ICTAutoTraderTesterTests",
+                            "ICTUnifiedTests"
+                        ],
+    "MetaTraderRuntime":  "NotRun",
+    "MarketBacktest":  "NotRun",
+    "BrokerExecution":  "NotRun",
+    "Steps":  [
+                  {
+                      "Name":  "RunnerRegressions",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:45:30.3007629Z",
+                      "DurationSeconds":  10.89,
+                      "Output":  "Describing Isolated tester configuration\n [+] resolves the expert from the real decision config 1.01s\n [+] accepts every checked-in ict tester config 359ms\n [+] rejects an enabled override following a disabled setting 111ms\n [+] does not accept a safety setting in the wrong section 36ms\n [+] rejects repeated sections 33ms\n [+] rejects account credentials 32ms\n [+] rejects expert input overrides 33ms\n [+] rejects a different expert path 34ms\n [+] rejects remote agents 42ms\nDescribing Expert and config selection\n [+] resolves a matching default config for every supported expert 316ms\n [+] uses an explicitly selected config when the expert is not specified 40ms\n [+] rejects an explicit expert/config mismatch 41ms\n [+] rejects configs outside the tests directory 35ms\n [+] reports a missing config before starting any compiler or terminal 30ms\nDescribing Fresh Strategy Tester evidence\n [+] accepts assertions only with tester completion and a clean exit 95ms\n [+] fails when MT5 exits successfully without starting the tester 26ms\n [+] fails on an empty log even with a zero exit code 28ms\n [+] rejects a nonzero terminal exit code 78ms\n [+] rejects completion without assertions 26ms\n [+] rejects assertions without completion 24ms\n [+] rejects a summary with no executed assertions 26ms\n [+] requires a positive count for detector fixtures too 27ms\n [+] accepts executed detector assertions with a positive count 24ms\n [+] rejects failed assertions even if a later result has zero failures 27ms\n [+] does not confuse zero with a nonzero failure count 25ms\n [+] does not accept another suite result 25ms\n [+] accepts the tester-only auto trader regression 53ms\n [+] does not accept an auto trader failure followed by a pass 25ms\n [+] rejects a probe with an unobserved requirement 25ms\n [+] accepts a completed probe with all its requirements 26ms\n [+] rejects a replay that did not process bars 27ms\n [+] rejects a replay with real order observations 33ms\n [+] reports a paper replay without claiming strategy acceptance 55ms\nDescribing Journal isolation\n [+] reads only new UTF-16 log content and ignores compiler logs 250ms\n [+] reads a newly created agent log, not just the terminal journal 34ms\n [+] handles a truncated journal 42ms\nDescribing Optional market cache copies\n [+] replaces stale data with a complete available cache copy 258ms\nWARNING: Market cache unavailable (sharing/lock violation): \r\nC:\\Users\\NQH-PC\\AppData\\Local\\Temp\\vscode-agent-codex-sandbox-RhVu9y\\69a85914-249a-462b-8693-2e3f8977e185\\dbdd490086344\r\n9f3963678baa4ed295b\\source\\2026.hcc. Isolated cached copy removed; market history NOT VERIFIED.\n [+] warns and records an unavailable exclusively locked source without retaining stale data 100ms\n [+] removes the previous isolated copy when the optional source is missing 49ms\n [+] recognizes a wrapped Win32 byte-range lock violation 44ms\n [+] propagates permission failures instead of reporting an optional cache lock 807ms\n [+] propagates disk failures and removes a partial copy 161ms\n [+] rejects a destination equal to the source without deleting installed data 61ms\nDescribing Prepare runtime with optional market history\nWARNING: Market cache unavailable (sharing/lock violation): \r\nC:\\Users\\NQH-PC\\AppData\\Local\\Temp\\vscode-agent-codex-sandbox-RhVu9y\\51993b80-ee52-4d58-a812-24cc260f30c4\\bfb0443a13f34\r\n3d7bba0237c3477b2ce\\cache\\history\\GBPUSD\\2026.hcc. Isolated cached copy removed; market history NOT VERIFIED.\n [+] keeps default cache copying and succeeds with a locked GBPUSD cache without launching or closing terminals 742ms\n [+] records the locked cache warning in a successful verification preparation step 907ms\nWARNING: Market cache unavailable; preparing binaries only. Set -MarketCachePath for market-history tests.\n [+] prepares binaries only and clears stale allowlisted cache files when the cache root is missing 207ms\nDescribing Compiler freshness and fixture regressions\n [+] rejects a stale success log from an earlier compilation 187ms\n [+] rejects a stale binary even when the log is fresh 116ms\n [+] rejects compiler warnings instead of treating them as a clean build 59ms\n [+] rejects a successful result mixed with a later failed compilation 55ms\n [+] fails on compiler timeout even if an older successful log exists 61ms\n [+] uses the actual Range suite failure counter 47ms\n [+] does not discard a failed fixture initialization 22ms\nDescribing Verification subprocess execution\n [+] captures output and the real nonzero exit code 423ms\n [+] preserves quotes and trailing backslashes in native arguments 391ms\n [+] records a launch failure as failure 27ms\n [+] does not report a timed-out verification process as passed 1.07s\nTests completed in 8.97s\nPassed: 57 Failed: 0 Skipped: 0 Pending: 0 Inconclusive: 0"
+                  },
+                  {
+                      "Name":  "CoreAlgorithms",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:45:41.2329999Z",
+                      "DurationSeconds":  2.972,
+                      "Output":  "ICTCoreFixtures RESULT checks=167 failures=0"
+                  },
+                  {
+                      "Name":  "PrepareRuntime",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:45:44.2079715Z",
+                      "DurationSeconds":  1.176,
+                      "Output":  "WARNING: Market cache unavailable (sharing/lock violation): \r\nC:\\Users\\NQH-PC\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\bases\\Exness-MT5Trial6\\history\\EUR\r\nUSD\\2026.hcc. Isolated cached copy removed; market history NOT VERIFIED.\nWARNING: Market cache unavailable (sharing/lock violation): \r\nC:\\Users\\NQH-PC\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\bases\\Exness-MT5Trial6\\history\\GBP\r\nUSD\\2026.hcc. Isolated cached copy removed; market history NOT VERIFIED.\nWARNING: Market cache unavailable (sharing/lock violation): \r\nC:\\Users\\NQH-PC\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\bases\\Exness-MT5Trial6\\history\\XAU\r\nUSD\\2026.hcc. Isolated cached copy removed; market history NOT VERIFIED.\nWARNING: Market cache unavailable (sharing/lock violation): \r\nC:\\Users\\NQH-PC\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\bases\\Exness-MT5Trial6\\history\\US3\r\n0\\2026.hcc. Isolated cached copy removed; market history NOT VERIFIED.\nWARNING: Market cache unavailable (sharing/lock violation): \r\nC:\\Users\\NQH-PC\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\bases\\Exness-MT5Trial6\\history\\UST\r\nEC\\2026.hcc. Isolated cached copy removed; market history NOT VERIFIED.\nPrepared isolated runtime: E:\\Project\\ict_engine_ea\\Tests\\.terminal (no credentials/config copied; cached market history only; copied=6; unavailable=5; market history NOT VERIFIED)."
+                  },
+                  {
+                      "Name":  "Compile:ICTDecisionTests",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:45:45.4008659Z",
+                      "DurationSeconds":  4.752,
+                      "Output":  "Result: 0 errors, 0 warnings, 2075 ms elapsed, cpu=\u0027X64 Regular\u0027"
+                  },
+                  {
+                      "Name":  "Compile:ICTDetectorTests",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:45:50.1524774Z",
+                      "DurationSeconds":  2.883,
+                      "Output":  "Result: 0 errors, 0 warnings, 1360 ms elapsed, cpu=\u0027X64 Regular\u0027"
+                  },
+                  {
+                      "Name":  "Compile:ICTRangeTests",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:45:53.0390762Z",
+                      "DurationSeconds":  6.663,
+                      "Output":  "Result: 0 errors, 0 warnings, 5217 ms elapsed, cpu=\u0027X64 Regular\u0027"
+                  },
+                  {
+                      "Name":  "Compile:ICTRangeReplayEA",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:45:59.7055503Z",
+                      "DurationSeconds":  5.81,
+                      "Output":  "Result: 0 errors, 0 warnings, 4099 ms elapsed, cpu=\u0027X64 Regular\u0027"
+                  },
+                  {
+                      "Name":  "Compile:Phase3ProbeEA",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:46:05.5184655Z",
+                      "DurationSeconds":  3.659,
+                      "Output":  "Result: 0 errors, 0 warnings, 1935 ms elapsed, cpu=\u0027X64 Regular\u0027"
+                  },
+                  {
+                      "Name":  "Compile:ICTAutoTraderTesterTests",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:46:09.1810611Z",
+                      "DurationSeconds":  4.256,
+                      "Output":  "Result: 0 errors, 0 warnings, 2751 ms elapsed, cpu=\u0027X64 Regular\u0027"
+                  },
+                  {
+                      "Name":  "Compile:ICTUnifiedTests",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:46:13.4396545Z",
+                      "DurationSeconds":  7.871,
+                      "Output":  "Result: 0 errors, 0 warnings, 6139 ms elapsed, cpu=\u0027X64 Regular\u0027"
+                  },
+                  {
+                      "Name":  "CompileFixture:ICTDecisionTests",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:46:21.3257802Z",
+                      "DurationSeconds":  3.792,
+                      "Output":  "Result: 0 errors, 0 warnings, 2061 ms elapsed, cpu=\u0027X64 Regular\u0027"
+                  },
+                  {
+                      "Name":  "CompileFixture:ICTDetectorTests",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:46:25.1180816Z",
+                      "DurationSeconds":  3.207,
+                      "Output":  "Result: 0 errors, 0 warnings, 1814 ms elapsed, cpu=\u0027X64 Regular\u0027"
+                  },
+                  {
+                      "Name":  "CompileFixture:ICTRangeTests",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:46:28.3286594Z",
+                      "DurationSeconds":  6.882,
+                      "Output":  "Result: 0 errors, 0 warnings, 5291 ms elapsed, cpu=\u0027X64 Regular\u0027"
+                  },
+                  {
+                      "Name":  "CompileFixture:ICTUnifiedTests",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T09:46:35.2135512Z",
+                      "DurationSeconds":  7.454,
+                      "Output":  "Result: 0 errors, 0 warnings, 5868 ms elapsed, cpu=\u0027X64 Regular\u0027"
+                  }
+              ]
+}

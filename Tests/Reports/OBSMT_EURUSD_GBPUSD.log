@@ -1,0 +1,64 @@
+﻿IE	0	10:09:24.104	Tester	"OBSMTProbeEA.ex5" X64
+RL	0	10:09:24.501	Tester	EURUSD: history data begins from 2023.01.01 00:00
+JE	0	10:09:24.501	Tester	EURUSD: history data begins from 2023.01.01 00:00
+DN	0	10:09:24.507	Core 1	agent process started on 127.0.0.1:3000
+EI	0	10:09:24.507	Core 1	connecting to 127.0.0.1:3000
+MN	0	10:09:25.544	Core 1	connected
+DO	0	10:09:25.558	Core 1	authorized (agent build 6295)
+FH	0	10:09:25.559	Tester	EURUSD,M15 (Exness-MT5Trial6): testing of Experts\OBSMTProbeEA.ex5 from 2026.09.01 00:00 to 2026.10.01 00:00
+KD	0	10:09:25.563	Core 1	common synchronization completed
+NN	0	10:09:25.650	Core 1	EURUSD: history for 2026 year synchronized
+KI	0	10:09:25.650	Core 1	EURUSD: history synchronization completed [1282 Kb]
+QK	0	10:09:25.651	Core 1	EURUSD: 1.25 Mb of history processed in 0:00:00.078
+MS	0	10:09:25.812	Tester	quality of analyzed history is 100%
+MK	0	10:09:25.997	Core 1	GBPUSD: history for 2026 year synchronized
+NL	0	10:09:25.997	Core 1	GBPUSD: history synchronization completed [1372 Kb]
+HF	0	10:09:25.998	Core 1	GBPUSD: 1.34 Mb of history processed in 0:00:00.078
+GS	0	10:09:26.220	Core 1	MetaTester 5 started on 127.0.0.1:3000
+KJ	0	10:09:26.220	Core 1	cloud network mode is off
+NM	0	10:09:26.220	Core 1	initialization finished
+DH	0	10:09:26.220	Core 1	login (build 6295)
+LS	0	10:09:26.220	Core 1	15288 bytes of account info loaded
+JG	0	10:09:26.220	Core 1	1478 bytes of tester parameters loaded
+KP	0	10:09:26.220	Core 1	2244 bytes of input parameters loaded
+QE	0	10:09:26.220	Core 1	1879 bytes of symbols list loaded (358 symbols)
+PQ	0	10:09:26.220	Core 1	expert file added: Experts\OBSMTProbeEA.ex5. 25144 bytes loaded
+PF	0	10:09:26.220	Core 1	7077 Mb available, 88 blocks set for ticks generating
+HS	0	10:09:26.220	Core 1	initial deposit 10000.00 USD, leverage 1:100
+OH	0	10:09:26.220	Core 1	successfully initialized
+JR	0	10:09:26.220	Core 1	27 Kb of total initialization data received
+RD	0	10:09:26.220	Core 1	Intel Core i7-2760QM  @ 2.40GHz, 16264 MB
+PN	0	10:09:26.220	Core 1	EURUSD: symbol to be synchronized
+LK	0	10:09:26.220	Core 1	EURUSD: symbol synchronized, 3800 bytes of symbol info received
+HH	0	10:09:26.220	Core 1	EURUSD: load 1.25 Mb of history data to synchronize in 0:00:00.165
+DS	0	10:09:26.220	Core 1	EURUSD: history synchronized from 2025.01.01 to 2026.10.01
+LP	0	10:09:26.220	Core 1	EURUSD,M15: history cache allocated for 43439 bars and contains 41382 bars from 2025.01.01 22:00 to 2026.08.31 23:45
+DS	0	10:09:26.220	Core 1	EURUSD,M15: history begins from 2025.01.01 22:00
+IK	0	10:09:26.220	Core 1	EURUSD,M15 (Exness-MT5Trial6): 1 minutes OHLC ticks generating
+QR	0	10:09:26.220	Core 1	EURUSD,M15: testing of Experts\OBSMTProbeEA.ex5 from 2026.09.01 00:00 to 2026.10.01 00:00 started with inputs:
+NN	0	10:09:26.220	Core 1	  InpSMTSymbol1=GBPUSD
+LE	0	10:09:26.220	Core 1	  InpSMTSymbol2=
+KR	0	10:09:26.220	Core 1	  InpOBTimeframe=15
+QF	0	10:09:26.220	Core 1	  InpSMTTimeframe=16385
+MI	0	10:09:26.220	Core 1	2026.09.01 00:00:00   OBSMT_PROBE START primary=EURUSD comparison1=GBPUSD comparison2=
+OE	0	10:09:26.220	Core 1	GBPUSD: symbol to be synchronized
+KP	0	10:09:26.220	Core 1	GBPUSD: symbol synchronized, 3800 bytes of symbol info received
+FS	0	10:09:26.220	Core 1	EURUSD,H1: history cache allocated for 10862 bars and contains 10347 bars from 2025.01.01 22:00 to 2026.08.31 23:00
+CL	0	10:09:26.220	Core 1	EURUSD,H1: 1 bar from 2026.09.01 00:00 added
+NH	0	10:09:26.220	Core 1	EURUSD,H1: history begins from 2025.01.01 22:00
+HS	0	10:09:26.220	Core 1	GBPUSD: load 1.34 Mb of history data to synchronize in 0:00:00.137
+IH	0	10:09:26.220	Core 1	GBPUSD: history synchronized from 2025.01.01 to 2026.10.01
+IH	0	10:09:26.220	Core 1	GBPUSD,H1: history cache allocated for 10862 bars and contains 10347 bars from 2025.01.01 22:00 to 2026.08.31 23:00
+HG	0	10:09:26.220	Core 1	GBPUSD,H1: 1 bar from 2026.09.01 00:00 added
+MO	0	10:09:26.220	Core 1	GBPUSD,H1: history begins from 2025.01.01 22:00
+MG	0	10:09:26.220	Core 1	2026.09.30 23:59:59   OBSMT_PROBE SUMMARY symbol=EURUSD bars=2112 candidate=20 confirmed=704 mitigated=1141 invalidated=82 expired=165 smt_bull=18 smt_bear=147 smt_missing=16 exposure=0 failures=0
+KE	0	10:09:26.220	Core 1	final balance 10000.00 USD
+CP	0	10:09:26.220	Core 1	OnTester result 0
+OP	0	10:09:26.220	Core 1	EURUSD,M15: 124532 ticks, 2112 bars generated. Environment synchronized in 0:00:00.175. Test passed in 0:00:00.490 (including ticks preprocessing 0:00:00.016).
+ND	0	10:09:26.220	Core 1	EURUSD,M15: total time from login to stop testing 0:00:00.665 (including 0:00:00.312 for history data synchronization)
+EH	0	10:09:26.220	Core 1	249735 total ticks for all symbols
+KO	0	10:09:26.220	Core 1	EURUSD: generate 124532 ticks in 0:00:00.016, passed to tester 124532 ticks
+GR	0	10:09:26.220	Core 1	GBPUSD: generate 125203 ticks in 0:00:00.000, passed to tester 125203 ticks
+HP	0	10:09:26.220	Core 1	54 Mb memory used including 4 Mb of history data, 64 Mb of tick data
+MD	0	10:09:26.220	Core 1	log file "C:\Users\NQH-PC\AppData\Roaming\MetaQuotes\Tester\D0E8209F77C8CF37AD8BF550E51FF075\Agent-127.0.0.1-3000\logs\20261101.log" written
+NS	0	10:09:26.286	Tester	automatic testing finished

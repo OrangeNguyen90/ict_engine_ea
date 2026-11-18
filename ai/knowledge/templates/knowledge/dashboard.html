@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ICT Smart Money AI · YouTube Knowledge Collector</title>
+  <style>
+    :root{font-family:system-ui,sans-serif;color:#e8eef7;background:#0f1726}body{max-width:1100px;margin:auto;padding:24px}
+    a{color:#8ecbff}header,section{background:#19263b;border:1px solid #344862;border-radius:14px;padding:22px;margin-bottom:18px}
+    .stats{display:flex;gap:12px;flex-wrap:wrap}.stats div{background:#243652;padding:12px 18px;border-radius:10px}small{color:#b5c7d9}
+    textarea{box-sizing:border-box;width:100%;min-height:90px;background:#0f1726;color:white;border:1px solid #627b99;border-radius:8px;padding:12px}
+    button{background:#63b4ff;color:#071525;border:0;border-radius:8px;padding:10px 18px;font-weight:bold;cursor:pointer}
+    table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px;border-bottom:1px solid #344862}td{vertical-align:top}
+    #answer{white-space:pre-wrap;line-height:1.5}.muted{color:#b5c7d9}.scroll{overflow-x:auto}
+  </style>
+</head>
+<body>
+<nav><a href="{% url 'market_dashboard' %}">ICT Market Analysis</a></nav>
+<section aria-labelledby="market-heading">
+  <h2 id="market-heading">ICT Market Analysis</h2>
+  <div class="stats"><div>Nến OHLCV: {{ market_candle_count }}</div><div>Tín hiệu: {{ market_signal_count }}</div><div>Lần phân tích: {{ market_run_count }}</div></div>
+  {% if market_candle_count %}
+  <p>Nến mới nhất: {{ market_latest_candle.symbol }} · {{ market_latest_candle.timeframe }} · {{ market_latest_candle.timestamp|date:"Y-m-d H:i T" }} · Nguồn: {{ market_latest_candle.data_source }}</p>
+  <p><a href="{% url 'market_dashboard' %}">Mở biểu đồ và lớp phân tích ICT →</a></p>
+  {% else %}
+  <p role="status">Chưa có nến OHLCV thực trong PostgreSQL, nên biểu đồ và tín hiệu ICT chưa thể hiển thị. Cần nhập tệp CSV/Parquet từ nguồn dữ liệu được phép sử dụng, sau đó chạy phân tích.</p>
+  <p><a href="{% url 'market_dashboard' %}">Mở Market Analysis →</a></p>
+  {% endif %}
+</section>
+<header><h1>ICT Smart Money AI</h1><p>YouTube Knowledge Collector · nguồn <a href="https://www.youtube.com/@InnerCircleTrader">The Inner Circle Trader</a></p></header>
+<section>
+  <h2>Trạng thái đồng bộ</h2>
+  <div class="stats"><div>Video: {{ video_count }}</div><div>Transcript: {{ transcript_count }}</div><div>Video đã embedding: {{ indexed_count }}</div><div>YouTube: {{ youtube_connection }}</div></div>
+  <p>API key: {% if youtube_key_configured %}đã cấu hình{% else %}chưa cấu hình{% endif %} · Đồng bộ thành công gần nhất: {% if last_success %}{{ last_success.finished_at|date:"Y-m-d H:i:s T" }} · Channel ID {{ last_success.channel_id }}{% else %}chưa có{% endif %}</p>
+  <p>Tác vụ gần nhất: {% if latest_run %}{{ latest_run.status }} (mới {{ latest_run.created_count }}, cập nhật {{ latest_run.updated_count }}){% else %}chưa có{% endif %}</p>
+  {% if latest_run.status == 'PENDING' %}<p role="status">Đang chờ worker nhận tác vụ. Nếu trạng thái không đổi, cần khởi động worker đồng bộ.</p>{% endif %}
+  {% if latest_run.status == 'RUNNING' %}<p role="status">Đang gọi YouTube Data API. Tải lại trang để xem kết quả.</p>{% endif %}
+  {% if latest_error %}<p role="alert">Lỗi gần nhất: {{ latest_error.error }} ({{ latest_error.finished_at|date:"Y-m-d H:i:s T" }})</p>{% endif %}
+  {% if request.user.is_staff %}<form method="post" action="{% url 'queue_youtube_sync' %}">{% csrf_token %}<button type="submit">Xếp hàng đồng bộ tăng dần</button></form><p class="muted">Chạy <code>python manage.py run_sync_jobs</code> bằng Task Scheduler hoặc terminal để xử lý hàng đợi.</p>{% endif %}
+</section>
+<section><h2>Video từ YouTube</h2><div class="scroll"><table><thead><tr><th>Video</th><th>Xuất bản</th><th>Chủ đề gợi ý từ metadata</th><th>Xử lý</th></tr></thead><tbody>
+{% for video in videos %}<tr><td><a href="{{ video.url }}" target="_blank" rel="noopener noreferrer">{{ video.title }}</a><br><small>{{ video.video_id }}</small></td><td>{{ video.published_at|date:"Y-m-d" }}</td><td>{{ video.topics|join:", "|default:"Chưa phân loại" }}</td><td>{{ video.processing_status }}</td></tr>
+{% empty %}<tr><td colspan="4">Chưa có metadata. Kiểm tra PostgreSQL, API key và chạy đồng bộ.</td></tr>{% endfor %}
+</tbody></table></div><p class="muted">Nhãn chủ đề từ tiêu đề/mô tả chỉ là gợi ý; transcript và embedding chỉ có khi đã nhập nguồn hợp lệ.</p></section>
+<section><h2>AI Chat</h2><p class="muted">General Chat dùng kiến thức mô hình. ICT Knowledge Chat chỉ sử dụng transcript đã nhập hợp lệ.</p>
+<p>Transcript: {{ transcript_count }} · Knowledge chunks: {{ chunk_count }} · Chunks đã embedding: {{ embedded_chunk_count }}</p>
+<p id="ollama-status" role="status">Đang kiểm tra Ollama và embedding model…</p>
+<label for="chat-mode">Chế độ: </label><select id="chat-mode"><option value="general">General Chat</option><option value="ict">ICT Knowledge Chat</option></select>
+<form id="chat-form">{% csrf_token %}<textarea id="question" required minlength="2" maxlength="1000" placeholder="Nhập câu hỏi..."></textarea><p><button type="submit">Hỏi AI</button></p></form>
+<div id="answer" aria-live="polite"></div><ul id="citations"></ul></section>
+<script>
+fetch('/api/health/').then(r=>r.json()).then(s=>{
+ document.querySelector('#ollama-status').textContent=s.available ? `Ollama: kết nối được · Chat ${s.chat_model}: ${s.chat_installed?'đã cài':'chưa cài'} · Embedding ${s.embedding_model}: ${s.embedding_installed?'đã cài':'chưa cài'}` : s.error;
+}).catch(()=>{document.querySelector('#ollama-status').textContent='Không kiểm tra được Ollama.'});
+document.querySelector('#chat-form').addEventListener('submit', async event => {
+  event.preventDefault(); const answer=document.querySelector('#answer'), citations=document.querySelector('#citations');
+  answer.textContent='Đang xử lý…'; citations.replaceChildren();
+  const button=event.submitter; button.disabled=true;
+  try { const response=await fetch('/api/chat/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value},body:JSON.stringify({question:document.querySelector('#question').value,mode:document.querySelector('#chat-mode').value})});
+    const data=await response.json(); answer.textContent=data.answer || data.error || data.detail || `Lỗi HTTP ${response.status}`;
+    for(const item of data.citations || []){const li=document.createElement('li'), link=document.createElement('a');link.href=item.url;link.textContent=`${item.video_title} · ${Math.floor(item.start_ms/1000)}s`;link.target='_blank';link.rel='noopener noreferrer';li.append(link);citations.append(li)}
+  } catch {answer.textContent='Không kết nối được với máy chủ hoặc phản hồi không hợp lệ.'}
+  finally {button.disabled=false;}
+});
+</script></body></html>

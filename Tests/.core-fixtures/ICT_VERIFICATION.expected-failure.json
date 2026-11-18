@@ -1,0 +1,51 @@
+{
+    "SchemaVersion":  1,
+    "Scope":  "AccountFreeVerification",
+    "Status":  "Failed",
+    "StartedUtc":  "2026-11-09T08:41:44.0273392Z",
+    "CompletedUtc":  "2026-11-09T08:41:54.4648048Z",
+    "SelectedExperts":  [
+                            "ICTDecisionTests"
+                        ],
+    "MetaTraderRuntime":  "NotRun",
+    "MarketBacktest":  "NotRun",
+    "BrokerExecution":  "NotRun",
+    "Steps":  [
+                  {
+                      "Name":  "RunnerRegressions",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T08:41:44.2371207Z",
+                      "DurationSeconds":  7.851,
+                      "Output":  "Describing Isolated tester configuration\n [+] resolves the expert from the real decision config 810ms\n [+] accepts every checked-in ict tester config 230ms\n [+] rejects an enabled override following a disabled setting 77ms\n [+] does not accept a safety setting in the wrong section 29ms\n [+] rejects repeated sections 27ms\n [+] rejects account credentials 27ms\n [+] rejects expert input overrides 24ms\n [+] rejects a different expert path 24ms\n [+] rejects remote agents 27ms\nDescribing Expert and config selection\n [+] resolves a matching default config for every supported expert 236ms\n [+] uses an explicitly selected config when the expert is not specified 31ms\n [+] rejects an explicit expert/config mismatch 31ms\n [+] rejects configs outside the tests directory 26ms\n [+] reports a missing config before starting any compiler or terminal 26ms\nDescribing Fresh Strategy Tester evidence\n [+] accepts assertions only with tester completion and a clean exit 145ms\n [+] fails when MT5 exits successfully without starting the tester 23ms\n [+] fails on an empty log even with a zero exit code 23ms\n [+] rejects a nonzero terminal exit code 31ms\n [+] rejects completion without assertions 23ms\n [+] rejects assertions without completion 23ms\n [+] rejects a summary with no executed assertions 25ms\n [+] requires a positive count for detector fixtures too 24ms\n [+] accepts executed detector assertions with a positive count 21ms\n [+] rejects failed assertions even if a later result has zero failures 24ms\n [+] does not confuse zero with a nonzero failure count 23ms\n [+] does not accept another suite result 23ms\n [+] accepts the tester-only auto trader regression 23ms\n [+] does not accept an auto trader failure followed by a pass 30ms\n [+] rejects a probe with an unobserved requirement 24ms\n [+] accepts a completed probe with all its requirements 44ms\n [+] rejects a replay that did not process bars 28ms\n [+] rejects a replay with real order observations 31ms\n [+] reports a paper replay without claiming strategy acceptance 58ms\nDescribing Journal isolation\n [+] reads only new UTF-16 log content and ignores compiler logs 232ms\n [+] reads a newly created agent log, not just the terminal journal 37ms\n [+] handles a truncated journal 559ms\nDescribing Compiler freshness and fixture regressions\n [+] rejects a stale success log from an earlier compilation 622ms\n [+] rejects a stale binary even when the log is fresh 115ms\n [+] rejects compiler warnings instead of treating them as a clean build 56ms\n [+] rejects a successful result mixed with a later failed compilation 58ms\n [+] fails on compiler timeout even if an older successful log exists 66ms\n [+] uses the actual Range suite failure counter 43ms\n [+] does not discard a failed fixture initialization 26ms\nDescribing Verification subprocess execution\n [+] captures output and the real nonzero exit code 546ms\n [+] preserves quotes and trailing backslashes in native arguments 357ms\n [+] records a launch failure as failure 30ms\n [+] does not report a timed-out verification process as passed 1.08s\nTests completed in 6.12s\nPassed: 47 Failed: 0 Skipped: 0 Pending: 0 Inconclusive: 0"
+                  },
+                  {
+                      "Name":  "CoreAlgorithms",
+                      "Status":  "Passed",
+                      "ExitCode":  0,
+                      "StartedUtc":  "2026-11-09T08:41:52.1464839Z",
+                      "DurationSeconds":  1.794,
+                      "Output":  "ICTCoreFixtures RESULT checks=89 failures=0"
+                  },
+                  {
+                      "Name":  "PrepareRuntime",
+                      "Status":  "Failed",
+                      "ExitCode":  1,
+                      "StartedUtc":  "2026-11-09T08:41:53.9447387Z",
+                      "DurationSeconds":  0.506,
+                      "Output":  "Missing terminal64.exe; set -TerminalInstallPath to an MT5 installation directory\r\nAt E:\\Project\\ict_engine_ea\\Tests\\RunICTTests.ps1:60 char:87\r\n+ ... pe Leaf)) { throw \"Missing $binary; set -TerminalInstallPath to an MT ...\r\n+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : OperationStopped: (Missing termina...ation directory:String) [], RuntimeException\r\n    + FullyQualifiedErrorId : Missing terminal64.exe; set -TerminalInstallPath to an MT5 installation directory"
+                  },
+                  {
+                      "Name":  "Compile:ICTDecisionTests",
+                      "Status":  "Skipped",
+                      "ExitCode":  null,
+                      "Output":  "Runtime preparation failed"
+                  },
+                  {
+                      "Name":  "CompileFixture:ICTDecisionTests",
+                      "Status":  "Skipped",
+                      "ExitCode":  null,
+                      "Output":  "Runtime preparation failed"
+                  }
+              ]
+}

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ICT Market Analysis</title>
+<style>
+body{font:14px system-ui;background:#0c1422;color:#e7eef8;margin:0;padding:20px}a{color:#8dc9ff}
+main{max-width:1450px;margin:auto}header,.panel{background:#18263a;border:1px solid #34455e;border-radius:10px;padding:16px;margin-bottom:12px}
+label{display:inline-flex;flex-direction:column;margin:4px 10px 4px 0;gap:4px}input,select,button{background:#0c1422;color:#e7eef8;border:1px solid #617994;border-radius:5px;padding:7px}
+button{cursor:pointer;background:#295b8e}#chart{width:100%;height:520px;display:block;background:#0b1728;cursor:crosshair}
+#details{white-space:pre-wrap;min-height:80px}#signals{max-height:300px;overflow:auto}table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #34455e;padding:7px;text-align:left}
+.layers label{display:inline-flex;flex-direction:row;align-items:center}#message{color:#ffd894}
+</style></head><body><main>
+<header><h1>ICT Market Analysis</h1><a href="/">Dashboard</a> · Nến và tín hiệu từ dữ liệu đã nhập</header>
+{% if not symbols %}<div class="panel" role="status"><strong>Chưa có dữ liệu giá.</strong> PostgreSQL hiện chưa có nến OHLCV để vẽ biểu đồ hoặc tạo tín hiệu. Hãy nhập CSV/Parquet có nguồn rõ ràng, rồi chạy phân tích. Các video YouTube và AI Chat không cung cấp dữ liệu giá.</div>{% endif %}
+<div class="panel">
+<label>Symbol<select id="symbol"><option value="">Chọn symbol</option>{% for symbol in symbols %}<option value="{{ symbol }}">{{ symbol }}</option>{% endfor %}</select></label>
+<label>Timeframe<select id="timeframe">{% for timeframe in timeframes %}<option value="{{ timeframe }}">{{ timeframe }}</option>{% endfor %}</select></label>
+<label>Nguồn dữ liệu<input id="source" placeholder="data_source"></label>
+<label>Sàn<input id="exchange" placeholder="exchange"></label>
+<label>Hợp đồng<input id="contract" placeholder="contract"></label>
+<label>Loại giá<select id="price_type"><option>trade</option><option>bid</option><option>ask</option><option>mid</option></select></label>
+<label>Từ<input id="start" type="datetime-local"></label><label>Đến<input id="end" type="datetime-local"></label>
+<button id="load">Tải biểu đồ</button>
+{% if request.user.is_staff %}<form method="post" action="{% url 'run_market_analysis' %}" id="analyze-form">{% csrf_token %}
+<input type="hidden" name="symbol"><input type="hidden" name="timeframe"><input type="hidden" name="data_source"><input type="hidden" name="exchange"><input type="hidden" name="contract"><input type="hidden" name="price_type"><button>Chạy phân tích</button></form>{% endif %}
+<div class="layers">
+<label><input type="checkbox" data-layer="swing" checked>Swing</label>
+<label><input type="checkbox" data-layer="structure" checked>BOS/MSS</label>
+<label><input type="checkbox" data-layer="fvg" checked>FVG</label>
+<label><input type="checkbox" data-layer="liquidity" checked>Liquidity</label>
+<label><input type="checkbox" data-layer="liquidity_event" checked>Sweep</label>
+<label><input type="checkbox" data-layer="dealing_range" checked>Premium/Discount</label></div>
+<p id="message" role="status"></p></div>
+<div class="panel"><canvas id="chart"></canvas><small>Kéo ngang để di chuyển; cuộn chuột để phóng to/thu nhỏ. Chọn tín hiệu trong bảng để xem bằng chứng.</small></div>
+<div class="panel"><h2>Chi tiết tín hiệu</h2><div id="details">Chọn một tín hiệu.</div></div>
+<div class="panel"><h2>Tín hiệu xác nhận</h2><div id="signals"></div></div>
+</main><script>
+const canvas=document.querySelector('#chart'),ctx=canvas.getContext('2d');
+let candles=[],signals=[],offset=0,visible=100,hit=[];
+const boxes=[...document.querySelectorAll('[data-layer]')];
+const iso=x=>new Date(x).toISOString();
+function size(){const rect=canvas.getBoundingClientRect();canvas.width=Math.max(300,Math.round(rect.width*devicePixelRatio));canvas.height=Math.round(rect.height*devicePixelRatio);ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);draw()}
+function draw(){
+ const w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);hit=[];
+ if(!candles.length)return;
+ const end=Math.min(candles.length,candles.length-offset),start=Math.max(0,end-visible),rows=candles.slice(start,end);
+ if(!rows.length)return;
+ const left=55,right=w-25,top=25,bottom=h-65;
+ let lo=Math.min(...rows.map(x=>+x.low)),hi=Math.max(...rows.map(x=>+x.high));const pad=(hi-lo)*.06||1;lo-=pad;hi+=pad;
+ const y=p=>bottom-(+p-lo)/(hi-lo)*(bottom-top), x=t=>left+(+new Date(t)-+new Date(rows[0].timestamp))/(+new Date(rows.at(-1).timestamp)-+new Date(rows[0].timestamp)||1)*(right-left);
+ ctx.font='11px system-ui';ctx.fillStyle='#a9bfd6';
+ for(let j=0;j<5;j++){const price=lo+(hi-lo)*j/4,yy=y(price);ctx.strokeStyle='#263a51';ctx.beginPath();ctx.moveTo(left,yy);ctx.lineTo(right,yy);ctx.stroke();ctx.fillText(price.toFixed(5),2,yy+3)}
+ const barWidth=Math.max(2,(right-left)/rows.length*.6);
+ for(const c of rows){const xx=x(c.timestamp),up=+c.close>=+c.open;ctx.strokeStyle=ctx.fillStyle=up?'#58d6a3':'#f27b88';ctx.beginPath();ctx.moveTo(xx,y(c.high));ctx.lineTo(xx,y(c.low));ctx.stroke();ctx.fillRect(xx-barWidth/2,Math.min(y(c.open),y(c.close)),barWidth,Math.max(1,Math.abs(y(c.open)-y(c.close))));
+  if(c.volume!==null){const vol=Math.max(0,+c.volume),maxVol=Math.max(...rows.map(v=>+(v.volume||0)))||1;ctx.globalAlpha=.35;ctx.fillRect(xx-barWidth/2,h-12-vol/maxVol*34,barWidth,vol/maxVol*34);ctx.globalAlpha=1}}
+ const enabled=new Set(boxes.filter(b=>b.checked).map(b=>b.dataset.layer));
+ const latestRange=signals.filter(s=>s.category==='dealing_range').at(-1);
+ ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+ for(const s of signals){if(!enabled.has(s.category))continue;if(s.category==='dealing_range'&&s!==latestRange)continue;const t=s.category==='structure'?s.pivot_time:s.pivot_time||s.formed_at;const area=['fvg','liquidity','dealing_range','structure'].includes(s.category);if((!area&&+new Date(t)<+new Date(rows[0].timestamp))||+new Date(t)>+new Date(rows.at(-1).timestamp))continue;const xx=Math.max(left,x(t));
+  let price=s.price??s.equilibrium??s.upper_price;if(price===undefined)continue;const yy=y(price);if(yy<top-30||yy>bottom+30)continue;
+  ctx.strokeStyle=ctx.fillStyle=s.direction==='bearish'||s.side==='SSL'?'#f27b88':s.category==='fvg'?'#58d6a3':'#f7d479';
+  const terminal=(s.history||[]).find(v=>['filled','invalidated','broken','swept'].includes(v.status));
+  const finish=s.category==='structure'?Math.min(right,x(s.formed_at)):terminal?Math.min(right,x(terminal.at)):right;
+  if(finish<left)continue;
+  if(['fvg','liquidity','dealing_range'].includes(s.category)){const upper=+(s.upper_price??s.range_high??price),lower=+(s.lower_price??s.range_low??price);ctx.globalAlpha=.15;
+   if(s.category==='dealing_range'){ctx.fillStyle='#f27b88';ctx.fillRect(xx,y(upper),finish-xx,y(s.equilibrium)-y(upper));ctx.fillStyle='#58d6a3';ctx.fillRect(xx,y(s.equilibrium),finish-xx,y(lower)-y(s.equilibrium))}
+   else ctx.fillRect(xx,Math.min(y(upper),y(lower)),Math.max(2,finish-xx),Math.abs(y(upper)-y(lower))||2);ctx.globalAlpha=1;
+   ctx.setLineDash(s.mitigated||terminal?[5,4]:[]);ctx.strokeRect(xx,y(upper),Math.max(2,finish-xx),Math.abs(y(lower)-y(upper))||2);ctx.setLineDash([])}
+  if(['structure','liquidity','dealing_range'].includes(s.category)){ctx.beginPath();ctx.moveTo(xx,yy);ctx.lineTo(finish,yy);ctx.stroke()}
+  ctx.beginPath();ctx.arc(xx,yy,4,0,Math.PI*2);ctx.fill();ctx.fillText(s.structure_label||s.signal_type||s.side||s.category,xx+6,yy-6);hit.push({x:xx,y:yy,s});
+ }
+ ctx.restore();
+ ctx.fillStyle='#a9bfd6';ctx.fillText(rows[0].timestamp.slice(0,16),left,h-45);ctx.fillText(rows.at(-1).timestamp.slice(0,16),right-120,h-45);
+}
+function details(s){document.querySelector('#details').textContent=JSON.stringify({type:s.signal_type||s.category,direction:s.direction,price:s.price,lower:s.lower_price,upper:s.upper_price,formed_at:s.formed_at,confirmed_at:s.confirmed_at,status:s.status,evidence_candle_ids:s.evidence_ids,parameters:s.parameters,history:s.history},null,2)}
+async function load(){
+ const symbol=document.querySelector('#symbol').value,tf=document.querySelector('#timeframe').value,source=document.querySelector('#source').value.trim();if(!symbol){document.querySelector('#message').textContent='Chọn symbol.';return}
+ const q=new URLSearchParams({symbol,timeframe:tf,limit:'2000'});if(source)q.set('data_source',source);for(const key of ['exchange','contract','price_type']){const value=document.querySelector('#'+key).value.trim();if(value||key==='contract')q.set(key,value)}
+ for(const key of ['start','end']){const value=document.querySelector('#'+key).value;if(value)q.set(key,iso(value))}
+ document.querySelector('#message').textContent='Đang tải...';
+ try{const sq=new URLSearchParams(q);sq.delete('start');sq.delete('end');if(q.get('end'))sq.set('as_of',q.get('end'));const [a,b]=await Promise.all([fetch('/api/ict/candles/?'+q),fetch('/api/ict/analysis/?'+sq)]);const ca=await a.json(),si=await b.json();if(!a.ok||!b.ok)throw Error(ca.error||si.error);
+ candles=ca.results;signals=si.results;offset=0;size();
+ document.querySelector('#message').textContent=candles.length?`${candles.length} nến, ${signals.length} tín hiệu xác nhận.`:'Chưa có dữ liệu OHLCV cho lựa chọn này.';
+ const table=document.createElement('table');table.innerHTML='<thead><tr><th>Thời điểm xác nhận</th><th>Loại</th><th>Giá/vùng</th><th>Trạng thái</th></tr></thead>';const tbody=document.createElement('tbody');
+ for(const s of signals){const tr=document.createElement('tr');for(const value of [s.confirmed_at,s.signal_type||s.category,s.price??s.equilibrium??s.lower_price,s.status]){const td=document.createElement('td');td.textContent=value??'';tr.append(td)}tr.onclick=()=>details(s);tbody.append(tr)}table.append(tbody);document.querySelector('#signals').replaceChildren(table);
+ }catch(e){document.querySelector('#message').textContent=e.message}}
+document.querySelector('#load').onclick=load;boxes.forEach(b=>b.onchange=draw);
+canvas.onwheel=e=>{e.preventDefault();visible=Math.max(20,Math.min(500,visible+(e.deltaY>0?15:-15)));draw()};
+let drag=null;canvas.onpointerdown=e=>{drag=e.clientX;canvas.setPointerCapture(e.pointerId)};canvas.onpointerup=e=>{if(drag!==null){if(Math.abs(e.clientX-drag)<5){const r=canvas.getBoundingClientRect(),p=hit.find(v=>Math.hypot(v.x-(e.clientX-r.left),v.y-(e.clientY-r.top))<12);if(p)details(p.s)}else{offset=Math.max(0,Math.min(Math.max(0,candles.length-visible),offset+Math.round((e.clientX-drag)/8)));draw()}drag=null}};
+const form=document.querySelector('#analyze-form');if(form)form.onsubmit=()=>{for(const n of ['symbol','timeframe','exchange','contract','price_type'])form.elements[n].value=document.querySelector('#'+n).value;form.elements['data_source'].value=document.querySelector('#source').value};
+new ResizeObserver(size).observe(canvas);const url=new URLSearchParams(location.search);if(url.get('symbol')){document.querySelector('#symbol').value=url.get('symbol');document.querySelector('#timeframe').value=url.get('timeframe')||'H1';load()}
+</script></body></html>

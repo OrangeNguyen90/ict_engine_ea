@@ -1,0 +1,19 @@
+# GAP analysis - 2026-11-01
+
+This audit covers the MQ5/MQH sources, README, installation/configuration/risk/advisory documents, test plans and the available Tester/compile reports. The attached `ResetProtectionState.log` records only a successful script compilation (0 errors, 0 warnings); it does not establish that a reset or advisory test ran.
+
+| Area | Current evidence | Gap / classification | Next action |
+| --- | --- | --- | --- |
+| Dashboard ↔ calculation EA | [Dashboard](../Indicators/SmartRiskDashboard.mq5) publishes a per-chart request; [service](../Experts/RiskCalculationService.mq5) responds each second. Earlier MT5 screenshot attached `TradingAdvisoryEA` to the dashboard chart instead. | **Configuration**: standalone advisor is log-only; MT5 allows one EA per chart. Preview has no responder. | Document precise placement and verify on demo chart. |
+| Advisory ↔ dashboard | Service writes numeric Global Variables with timestamp last; dashboard expires them after 10 seconds. Service only starts analysis after a dashboard request. | **Integration**: no direct context snapshot when service/request absent; status alone does not show component structure. | Publish a separate read-only context snapshot and explicit validity/age. |
+| Protection ↔ advisor | `TRADE_READY` is gated on protection heartbeat, NORMAL state, and health. The screenshot showed the protection EA stopped. | **Configuration/safety**: NO TRADE is expected. | Keep gate; document that protection runs on another chart. |
+| Swing/BOS/MSS | [MarketStructure](../Include/MarketStructure.mqh) uses closed bars, but stores prices without swing timestamps; dashboard draws none. | **Phase 3 display**: confirmed levels cannot be placed on chart accurately. | Add confirmed timestamps, publish context and draw historical anchors. |
+| Liquidity/FVG/premium-discount | Detection exists in [LiquidityDetector](../Include/LiquidityDetector.mqh), [FVGDetector](../Include/FVGDetector.mqh) and [TradeAdvisor](../Include/TradeAdvisor.mqh); chart has no direct objects for them. | **Phase 3 display**: incomplete. | Publish PDH/PDL, sweep, FVG bounds/time, equilibrium and render only available values. |
+| Ready plan | Entry zone, Entry, SL, TP, lot, risk, reward and RR are shown when ready; stale plan is hidden. | **Phase 3 display**: explicit SL/TP chart zones, reasons and context need visual review. | Add non-draggable advisory objects distinct from planned lines. |
+| Confirmed bars/repaint | Structure, FVG, sweep, trigger and ATR use closed bars. The signal uses the current quote for entry/spread. | **Validation**: no replay proving stable confirmed anchors or documenting historical data revisions. | Record bar times and test replay/reload. |
+| Numeric gates | [RiskCalculator](../Include/RiskCalculator.mqh) checks broker spec, quote freshness, tick grid, stop distance, lot, RR and margin. | **Validation**: A06/A07 and Forex/Gold/index broker cases lack execution evidence. | Add focused Tester/demo evidence; never infer PASS from compile. |
+| A01–A10 | [Phase 3 plan](../Tests/Phase3_Test_Plan.md) lists cases, none marked runtime PASS. | **Acceptance blocker**: Phase 3 not accepted. | Execute, capture logs/screenshots and update report case by case. |
+| Phase 4 | No portfolio monitor, scoring, position management, journal or analytics modules. | **Sequencing**: implementation blocked by the requested Phase 3 gate. | Write implementation plan; start coding only after A01–A10 acceptance. |
+| Phase 2 | Read-only threshold test and a Hedging cancel/close fixture passed; production restart/Netting/failure scenarios remain unverified. | **Safety/validation**: do not alter latch, lock or 3% account-wide policy while recovering Phase 3. | Leave policy unchanged; separately validate outstanding Phase 2 cases. |
+
+See [test report](TEST_REPORT.md) for the scope of actual executed tests. No live-account testing is authorized.

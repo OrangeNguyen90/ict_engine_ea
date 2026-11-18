@@ -1,0 +1,401 @@
+Production pure MQL algorithms and dashboard diagnostics executed through mechanical C# syntax adaptation (fixed clock, zero chart prices).
+NOT a MetaTrader runtime test or market backtest.
+UTC: 2026-11-18T02:41:03.5685396Z
+ICTTimeframeMapper.mqh SHA256=C37D5FC59D797B2D230B8199A8FEAF38330670315B80F4E704F105510E15617D
+ICTSignalResult.mqh SHA256=0434CA6451FFA82019E59C18F683304619D8F577B3D5391D09364C22C0C3BE1E
+MarketStructure.mqh SHA256=A2EC1D46D4452C2664C942B199D822F90768EE36551B5A4C96D7F84913244291
+ICTBarSnapshot.mqh SHA256=22DB92AC783E2F46955D9047C1A24F7AA95BBA137E86D7B4A8488F2603154139
+ICTSessionLiquidity.mqh SHA256=82CC5D8A1D274D96809948763737A7D471EF2A4E03D3017B3C8D3B491D485996
+SymbolCorrelationEngine.mqh SHA256=2BBA200F499322E92F5959B105F83241F205D95DC3D2CD65D9B91348988A2F9D
+SMTSignalValidator.mqh SHA256=B1E3694F71562F14D59DA6292DE2E0FDA75107824C2E5E77230D63B622D88404
+SMTDivergenceDetector.mqh SHA256=3F40A506C9043CD9FF2626E629AB7DD7AC9FF13C14E9F7BFBFF48763C99CE71E
+FVGDetector.mqh SHA256=64290EDC22BC6F64C313D45A27A0A83B943BED727C89E95577530F84AEEDD030
+OrderBlockDetector.mqh SHA256=3EE56A8C261B07AB9BFC47867F57F8D8F6789E0DA312FDE3ACC0D9BBCD72FE94
+OrderBlockScoring.mqh SHA256=000C4E715AC69342079E527CA4D3D258C906BCD698DCA3BBFDF2D1D34FF11B5B
+ICTSweepSequence.mqh SHA256=2FB3E4841E9D2DB52F591A26F49059AC03B041EC75D466F5E4A40AA6142D92AD
+ICTStrongOrderBlock.mqh SHA256=0A0CDF3BBAF4ECFB6C50E37E2C675C185786DE83EACAD71FE7D069F4F127936B
+ICTDynamicSMT.mqh SHA256=AC4B7DB8D4A9B1C0E3DB8958726157F65B3555A43487AE8104A7DEE2A412DBF6
+ICTRangeTypes.mqh SHA256=399CDCA544ECF93DAF6193B7177A4BF1C12E63ADEC96CFEE1D2DDAE3E69F9CE4
+ICTRangeEngine.mqh SHA256=55652345951851832509ABB0C1D8DC7EFF5674B7FE48AF05E7FB49A5BA97B9DB
+ICTBalancedPriceRange.mqh SHA256=6A455A2AE30F2A4D27D5110BBFFFA95FA373E5E6B644E03B7AF80AB110383FDC
+ICTUnifiedAnalysis.mqh SHA256=689691200D06FBC47F1C81CF80ED27C0DBEBDC81EC8DF8A0C70735A84ADE5AAB
+ICTUnifiedBridge.mqh SHA256=21980AEC6F01FBB54A470828350B724D22F591A4825BD5A4D1ED3B3B9AB8FAF9
+ICTPositionRisk.mqh SHA256=51FA3B70901EFCB9876C4ACFE8EE37256BE7317DCED0CB50149D51683C548946
+ICTChartLayout.mqh SHA256=30CD027770FA5083515B14A428E9E8A822B6DB2AA959753A635BE4040098F8EB
+ICTDashboardVietnamese.mqh SHA256=93808F99D87BA122903C6C3EF980FED8F982B43DFF092DFA4E7871F12EA7BD17
+ICTUnifiedRenderer.mqh SHA256=5E6ADD2D231D485D692F2482B2CD91388E313995064CEC24B9B86206A66CC681
+
+AUTO map 1 PASS
+AUTO map 2 PASS
+AUTO map 3 PASS
+AUTO map 4 PASS
+AUTO map 5 PASS
+AUTO map 6 PASS
+AUTO map 10 PASS
+AUTO map 12 PASS
+AUTO map 15 PASS
+AUTO map 20 PASS
+AUTO map 30 PASS
+AUTO map 16385 PASS
+AUTO map 16386 PASS
+AUTO map 16387 PASS
+AUTO map 16388 PASS
+AUTO map 16390 PASS
+AUTO map 16392 PASS
+AUTO map 16396 PASS
+AUTO map 16408 PASS
+AUTO map 32769 PASS
+AUTO map 49153 PASS
+chart change removes old H1 PASS
+chart change to H4 PASS
+valid manual PASS
+manual wrong order PASS
+manual missing middle PASS
+W1 two tier PASS
+MN1 one tier PASS
+31-day month PASS
+leap month PASS
+28-day month PASS
+year rollover PASS
+HTF unfinished month excluded PASS
+HTF month available only after close PASS
+aligned BUY matrix PASS
+aligned SELL matrix PASS
+counter trend WAIT PASS
+neutral no trade PASS
+missing data no trade PASS
+independent LTF override remaps automatic upper tiers PASS
+independent MTF override preserves HTF PASS
+independent HTF override preserves MTF PASS
+independent invalid ordering rejected PASS
+positive bearish mismatched but nearby confirmed pivots PASS
+no future right bar PASS
+comparator right bar must close PASS
+confirmed at actual prefix close PASS
+gap outside tolerance rejected PASS
+comparator-only source is explicit PASS
+positive bullish PASS
+inverse HH versus LL PASS
+inverse LL versus HH PASS
+inverse matching extreme is not divergence PASS
+missing session bar does not create SMT PASS
+one evt, not one evt per refresh/bar PASS
+first confirmation and ID immutable with future suffix PASS
+display includes bar sixty boundary PASS
+display excludes earlier confirmation PASS
+display excludes future confirmation PASS
+AUTO_ALL three distinct frames PASS
+AUTO chart override adds independent SMT source PASS
+AUTO chart matching LTF reuses source PASS
+MANUAL pins SMT despite chart override PASS
+AUTO_LTF PASS
+AUTO_MTF PASS
+AUTO_HTF PASS
+MANUAL SMT PASS
+no fabricated HTF on MN1 PASS
+positive measured relation PASS
+inverse measured relation PASS
+flat data relation unknown PASS
+OB group 1 PASS
+OB waits for closed displacement 1 PASS
+OB group 2 PASS
+OB waits for closed displacement 2 PASS
+OB group 3 PASS
+OB waits for closed displacement 3 PASS
+OB actual confirmation close PASS
+fresh after departure PASS
+first touch partial PASS
+same candle never increments touch PASS
+50 percent mitigation, same touch PASS
+second touch after leaving is not sweep two PASS
+invalidation after mitigation PASS
+ID, boundaries, formation and score immutable PASS
+seven scores total 100 PASS
+optional FVG reduces exactly fifteen PASS
+80 points missing reversal gate is medium PASS
+continuation separate gates do not require reversal sweep PASS
+disabled continuation cannot be strong PASS
+full wick group bounds PASS
+body bounds PASS
+OB expiry by actual closed bars PASS
+wick invalidation PASS
+same wick does not invalidate close mode PASS
+ordinary opposing candle is not a strong OB PASS
+closed BUY confirms all hard gates PASS
+closed SELL mirrors BUY PASS
+100 points cannot bypass HTF PASS
+100 points cannot bypass MTF PASS
+100 points without trigger is WATCH only PASS
+missing data cannot confirm PASS
+reduced tier never confirms PASS
+forming LTF never confirms PASS
+future source evt rejected PASS
+required missing SMT veto PASS
+optional missing SMT does not veto PASS
+required aligned SMT passes PASS
+no invented target PASS
+invalid BUY stop rejected PASS
+invalid SELL target rejected PASS
+net RR below two veto PASS
+higher existing RR threshold preserved PASS
+risk manager veto cannot be scored away PASS
+confirmation stored once PASS
+later prices cannot repaint committed candle PASS
+opposite side cannot replace same candle PASS
+oldest closed candle retained inclusive PASS
+sixty-first older candle excluded PASS
+future confirmation excluded from history PASS
+claimed RR cannot exceed actual plan geometry PASS
+same bar allows an updated unconfirmed observation PASS
+risk recovery allows same-bar confirmation with all gates PASS
+same-bar promotion cannot bypass risk PASS
+different candle cannot replace current journal row PASS
+confirmed candle is immutable even for opposite later evidence PASS
+different symbol cannot reuse a confirmed record PASS
+closed zone reaction after prior structure 1 PASS
+future zone cannot confirm reaction 1 PASS
+future structure cannot confirm reaction 1 PASS
+unclosed reaction rejected 1 PASS
+range reaction can follow displacement on an earlier bar 1 PASS
+range reaction without displacement rejected 1 PASS
+range reaction without a valid setup rejected 1 PASS
+old reaction not reissued on a later candle 1 PASS
+saved MTF break survives a later quiet candle 1 PASS
+opposite MTF break vetoes saved setup 1 PASS
+future MTF evt cannot confirm setup 1 PASS
+legacy still requires its current MTF break 1 PASS
+fully traversed zone rejected 1 PASS
+closed zone reaction after prior structure -1 PASS
+future zone cannot confirm reaction -1 PASS
+future structure cannot confirm reaction -1 PASS
+unclosed reaction rejected -1 PASS
+range reaction can follow displacement on an earlier bar -1 PASS
+range reaction without displacement rejected -1 PASS
+range reaction without a valid setup rejected -1 PASS
+old reaction not reissued on a later candle -1 PASS
+saved MTF break survives a later quiet candle -1 PASS
+opposite MTF break vetoes saved setup -1 PASS
+future MTF evt cannot confirm setup -1 PASS
+legacy still requires its current MTF break -1 PASS
+fully traversed zone rejected -1 PASS
+peer one inherits legacy positive PASS
+peer two independent inverse PASS
+missing peer remains NA despite historical evt PASS
+qualified peer bullish PASS
+opposed peer events never green confluence PASS
+old comparator events cannot leak after mapping change PASS
+wrong relation cannot supply current evidence PASS
+future SMT evt unavailable PASS
+wrong source timeframe unavailable PASS
+invalidated SMT keeps confirmation metadata without live points PASS
+default configured OB weights valid PASS
+touched OB loses freshness but frozen score remains PASS
+repeat touches lower current quality PASS
+invalidated OB is never STRONG PASS
+invalid OB weight total rejected PASS
+alternative OB weights sum 100 PASS
+configured FVG weight applied PASS
+liquidity outside close is not breakout 1 PASS
+liquidity two closed holds confirm breakout 1 PASS
+liquidity evt committed once 1 PASS
+liquidity retest needs later hold 1 PASS
+retest does not repaint breakout 1 PASS
+liquidity explicit false breakout 1 PASS
+duplicate false breakout does not count twice 1 PASS
+consumed pool cannot become fresh again 1 PASS
+wick reclaim distinct from outside-close failure 1 PASS
+same sweep bar never recounted 1 PASS
+separated second sweep same pool 1 PASS
+late reclaim cannot become a reversal 1 PASS
+reclaim at configured window remains valid 1 PASS
+liquidity outside close is not breakout -1 PASS
+liquidity two closed holds confirm breakout -1 PASS
+liquidity evt committed once -1 PASS
+liquidity retest needs later hold -1 PASS
+retest does not repaint breakout -1 PASS
+liquidity explicit false breakout -1 PASS
+duplicate false breakout does not count twice -1 PASS
+consumed pool cannot become fresh again -1 PASS
+wick reclaim distinct from outside-close failure -1 PASS
+same sweep bar never recounted -1 PASS
+separated second sweep same pool -1 PASS
+late reclaim cannot become a reversal -1 PASS
+reclaim at configured window remains valid -1 PASS
+older pool seeded with complete closed history 1 PASS
+prior sweep retained; future suffix ignored 1 PASS
+seed observation stored once 1 PASS
+pre-range events still update the pool lifecycle 1 PASS
+no evt is attributed to a range before its confirmation 1 PASS
+uncovered pool cannot be assumed fresh 1 PASS
+older pool seeded with complete closed history -1 PASS
+prior sweep retained; future suffix ignored -1 PASS
+seed observation stored once -1 PASS
+pre-range events still update the pool lifecycle -1 PASS
+no evt is attributed to a range before its confirmation -1 PASS
+uncovered pool cannot be assumed fresh -1 PASS
+equal tolerance uses minimum ticks PASS
+equal tolerance uses ATR PASS
+equal tolerance uses historical spread price PASS
+invalid spread cannot silently lower tolerance PASS
+seed history cannot be shorter than structural history PASS
+BUY exit quote still below target PASS
+BUY exit quote at target is not actionable PASS
+SELL exit quote still above target PASS
+SELL exit quote at target is not actionable PASS
+missing or inverted quote fails closed PASS
+reaction candle touching BUY target is ambiguous PASS
+reaction candle touching SELL target is ambiguous PASS
+BUY target beyond reaction candle is unambiguous PASS
+SELL target beyond reaction candle is unambiguous PASS
+fresh/touched overlapping pair marks both zones PASS
+mitigated first zone clears both PASS
+invalidated second zone clears both PASS
+foreign range clears both PASS
+non-internal first zone clears both PASS
+non-internal second zone clears both PASS
+future confirmation clears both PASS
+opposite directions do not combine PASS
+separate zones do not combine PASS
+same type zones do not combine PASS
+sell pair marks both zones PASS
+invalid owning range clears both PASS
+Asia crossing midnight, broker UTC+2 and closed bars PASS
+session not confirmed one second before end PASS
+future suffix outside offset schedule cannot change confirmed result PASS
+duplicate slot rejected PASS
+missing slot rejected PASS
+invalid OHLC rejected PASS
+invalid candle open rejected PASS
+incompatible timeframe rejected PASS
+broker offset coverage required PASS
+London local daylight offset mapped independently from broker PASS
+spring DST changes session elapsed duration PASS
+spring nonexistent local boundary rejected PASS
+fall DST includes repeated hour once in UTC PASS
+fall repeated local boundary rejected PASS
+ambiguous broker timestamp rejected PASS
+schedule gap rejected PASS
+SMT diagnostic unavailable PASS
+SMT diagnostic none PASS
+SMT diagnostic aligned matches gate PASS
+SMT diagnostic opposite matches gate PASS
+SMT diagnostic conflict matches veto PASS
+SMT diagnostic stale peer unavailable PASS
+live matching plan uses fresh RR while journal stays immutable PASS
+risk veto remains published while journal remains confirmed PASS
+changed live plan cannot publish historical confirmation PASS
+changed target identity cannot reuse committed confirmation PASS
+inconsistent confirmed flags fail closed PASS
+opposite live confirmation cannot replace committed signal PASS
+below three percent stays normal PASS
+exactly three percent does not exceed the warning boundary PASS
+over three percent warns PASS
+exactly five percent warns without crossing the close boundary PASS
+over five percent requests a close policy PASS
+a gap past both thresholds goes directly to close policy PASS
+unknown stop or loss metric cannot authorize a close PASS
+zero reference capital cannot authorize a close PASS
+negative reference capital cannot authorize a close PASS
+negative loss input is not a loss threshold PASS
+reversed warning and closing thresholds are rejected PASS
+threshold policy honors a selected positive reference PASS
+position risk uses real broker money and actual volume PASS
+actual SL TP and floating percentages use the selected account capital PASS
+net position RR includes swap and configured cost reserve PASS
+equity denominator changes percent without changing risk money PASS
+partial close values only remaining exposure PASS
+sell risk uses broker valuation and positive swap PASS
+missing SL cannot reuse an earlier valid stop result PASS
+a missing stop makes aggregate risk explicitly incomplete PASS
+failed broker stop valuation is unknown not zero risk PASS
+missing TP preserves known stop risk but has no invented reward PASS
+profitable trailing stop reports locked money without infinite RR PASS
+net break even after fees is distinct from a missing stop PASS
+a target below net break even remains a negative P L PASS
+zero capital keeps valid money figures without claiming a valid percent PASS
+negative equity never divides or produces a negative risk percentage PASS
+negative configured fees cannot inflate projected reward PASS
+zero actual position volume is invalid PASS
+unknown position direction is invalid PASS
+hedged positions sum loss exposures instead of cancelling each other PASS
+locked stop profit never offsets another position risk PASS
+no positions shows an explicit waiting state PASS
+live risk panel shows actual ticket and money percentages PASS
+cost treatment and actual entry basis are visible in risk panel PASS
+missing SL is prominently shown as unknown with partial totals PASS
+display never presents zero capital as a genuine 0 percent risk PASS
+disconnected account data is visibly labelled PASS
+a failed position read cannot be mistaken for an empty account PASS
+empty SMT slot restores without a comparator PASS
+legacy empty comparator cursor migrates without a fabricated peer PASS
+legacy empty comparator cursor migrates without a fabricated peer PASS
+legacy empty comparator cursor migrates without a fabricated peer PASS
+identified SMT cursor retains its frozen replay boundary PASS
+SMT cursor from a different mapped frame remains rejected PASS
+legacy empty cursor cannot conceal a different timeframe PASS
+legacy empty cursor cannot conceal future history PASS
+empty cursor without a source frame cannot advance history PASS
+unused SMT layer cannot import a legacy replay cursor PASS
+SMT persistence failure retains independently closed price context PASS
+missing MTF or absent tier cannot create chart analysis PASS
+unfinished future context cannot be drawn PASS
+incomplete structure cannot be drawn as confirmed PASS
+missing tiers identify the frame and the specific history requirement PASS
+missing data is unavailable PASS
+unknown direction remains unknown PASS
+valid no-divergence is none PASS
+aligned is reported and passes existing gate PASS
+opposite is reported and fails existing gate PASS
+peer conflict remains vetoed PASS
+partial data reported without changing aligned gate PASS
+opposite peers conflict and remain vetoed PASS
+none on another peer retains aligned result PASS
+stale peer does not become aligned PASS
+unknown relation is unavailable PASS
+downstream gates not labeled failed on missing data PASS
+failed MTF leaves trigger unevaluated PASS
+missing trigger is wait and leaves SMT unevaluated PASS
+required SMT veto precedes target and risk PASS
+missing target precedes risk PASS
+risk failure only after target PASS
+dashboard displays the Vietnamese risk cause while retaining the original signal PASS
+confirmed result shows risk pass PASS
+invalid geometry is reported as risk failure despite precheck PASS
+valid optional-SMT setup stays confirmed PASS
+same setup retains required SMT veto PASS
+default chart font is 75 percent rounded PASS
+custom chart fonts use 75 percent PASS
+odd chart font sizes round to the nearest point PASS
+scaled chart font stays positive PASS
+chart labels can touch without overlapping PASS
+chart labels detect pixel collisions PASS
+chart labels require a visible gap PASS
+dense annotations use separate pixel rows with padding PASS
+annotations stay result_out of the dashboard and chart edge PASS
+chart zones use only the selected timeframe PASS
+chart accepts a valid selected-timeframe zone PASS
+chart rejects overlapping price and time PASS
+chart counts only hidden overlaps PASS
+chart accepts touching price boundaries PASS
+chart accepts non-overlapping time spans PASS
+chart rejects invalid zones PASS
+other timeframe and invalid zones do not inflate overlap count PASS
+dark chart label contrast PASS
+light chart label contrast PASS
+medium chart background chooses a readable text int PASS
+dashboard translates the risk veto PASS
+dashboard translation does not mutate the engine reason PASS
+dashboard translates compound timeframe context PASS
+dashboard keeps unknown diagnostics visible PASS
+dashboard translates risk detail without discarding it PASS
+central signal packs PASS
+central signal bridge roundtrip PASS
+bridge retains independent unavailable peer PASS
+bridge refuses confirmed label without LTF gate PASS
+bridge refuses decision-context timestamp mismatch PASS
+bridge rejects truncated snapshot PASS
+SMT journal payload preserves original confirmation PASS
+SMT journal rejects identity corruption PASS
+SMT journal rejects future confirmation PASS
+SMT journal rejects truncated payload PASS
+ICTCoreFixtures RESULT checks=373 failures=0

@@ -1,6 +1,6 @@
 Production pure MQL algorithms and dashboard diagnostics executed through mechanical C# syntax adaptation (fixed clock, zero chart prices).
 NOT a MetaTrader runtime test or market backtest.
-UTC: 2026-11-18T02:41:03.5685396Z
+UTC: 2026-11-24T04:12:37.6627469Z
 ICTTimeframeMapper.mqh SHA256=C37D5FC59D797B2D230B8199A8FEAF38330670315B80F4E704F105510E15617D
 ICTSignalResult.mqh SHA256=0434CA6451FFA82019E59C18F683304619D8F577B3D5391D09364C22C0C3BE1E
 MarketStructure.mqh SHA256=A2EC1D46D4452C2664C942B199D822F90768EE36551B5A4C96D7F84913244291
@@ -15,15 +15,19 @@ OrderBlockScoring.mqh SHA256=000C4E715AC69342079E527CA4D3D258C906BCD698DCA3BBFDF
 ICTSweepSequence.mqh SHA256=2FB3E4841E9D2DB52F591A26F49059AC03B041EC75D466F5E4A40AA6142D92AD
 ICTStrongOrderBlock.mqh SHA256=0A0CDF3BBAF4ECFB6C50E37E2C675C185786DE83EACAD71FE7D069F4F127936B
 ICTDynamicSMT.mqh SHA256=AC4B7DB8D4A9B1C0E3DB8958726157F65B3555A43487AE8104A7DEE2A412DBF6
-ICTRangeTypes.mqh SHA256=399CDCA544ECF93DAF6193B7177A4BF1C12E63ADEC96CFEE1D2DDAE3E69F9CE4
+ICTRangeTypes.mqh SHA256=BCF3F742E705316D80EFEC972109EAD31D8928F8B66491022164D0978DD11E89
 ICTRangeEngine.mqh SHA256=55652345951851832509ABB0C1D8DC7EFF5674B7FE48AF05E7FB49A5BA97B9DB
 ICTBalancedPriceRange.mqh SHA256=6A455A2AE30F2A4D27D5110BBFFFA95FA373E5E6B644E03B7AF80AB110383FDC
 ICTUnifiedAnalysis.mqh SHA256=689691200D06FBC47F1C81CF80ED27C0DBEBDC81EC8DF8A0C70735A84ADE5AAB
 ICTUnifiedBridge.mqh SHA256=21980AEC6F01FBB54A470828350B724D22F591A4825BD5A4D1ED3B3B9AB8FAF9
-ICTPositionRisk.mqh SHA256=51FA3B70901EFCB9876C4ACFE8EE37256BE7317DCED0CB50149D51683C548946
-ICTChartLayout.mqh SHA256=30CD027770FA5083515B14A428E9E8A822B6DB2AA959753A635BE4040098F8EB
+ICTPositionRisk.mqh SHA256=C29AF5329356D1625CAD9D97C6DBA39997031C148E3634F0E8D7506EFD19C157
+PositionPlanValidation.mqh SHA256=0D8CCD6F82D35FEAF87C51FD7E1F84E4B8A4E6F0162EB02DB0987B2531389189
+ICTStatisticalLearning.mqh SHA256=895A72E94DC63E0DADE2F7DBF19186B448701602AF572BF170BB8A0BE490BAFC
+ICTSweepFocus.mqh SHA256=BDCA016984040480355A24AF7210A29E16296ADBEB9F000FBDFCE10D8066C675
+ICTAnalyticalConsensus.mqh SHA256=E8A12371A567721F9B4F80D0F43FB65A3340F847D2B0275A9FC3F6324043DBAF
+ICTChartLayout.mqh SHA256=A76B1DD296300846BB67161ECB22437DF71FDA770C565A258AE6FE3985189037
 ICTDashboardVietnamese.mqh SHA256=93808F99D87BA122903C6C3EF980FED8F982B43DFF092DFA4E7871F12EA7BD17
-ICTUnifiedRenderer.mqh SHA256=5E6ADD2D231D485D692F2482B2CD91388E313995064CEC24B9B86206A66CC681
+ICTUnifiedRenderer.mqh SHA256=C3CAE66EC56206CF30BB5163FBCC45DB15AB75C5C61D69EC7E5D8E65A1026223
 
 AUTO map 1 PASS
 AUTO map 2 PASS
@@ -310,6 +314,7 @@ a missing stop makes aggregate risk explicitly incomplete PASS
 failed broker stop valuation is unknown not zero risk PASS
 missing TP preserves known stop risk but has no invented reward PASS
 profitable trailing stop reports locked money without infinite RR PASS
+a profitable SL still has additional equity giveback risk PASS
 net break even after fees is distinct from a missing stop PASS
 a target below net break even remains a negative P L PASS
 zero capital keeps valid money figures without claiming a valid percent PASS
@@ -319,9 +324,56 @@ zero actual position volume is invalid PASS
 unknown position direction is invalid PASS
 hedged positions sum loss exposures instead of cancelling each other PASS
 locked stop profit never offsets another position risk PASS
+entry capital shrinks with equity PASS
+floating profit cannot enlarge trade capital above balance PASS
+deposits cannot enlarge a fixed protection reference PASS
+invalid current equity blocks sizing PASS
+automatic SL TP accepts the exact requested three percent risk PASS
+automatic SL TP rejects more than three percent risk PASS
+automatic SL TP cannot configure a ceiling above three percent PASS
+small entry fits an empty account budget PASS
+exact portfolio and projected daily boundary may be reserved PASS
+portfolio boundary cannot be crossed by a new SL PASS
+individually small trades cannot stack past the aggregate cap PASS
+pending risk reserves the same budget as open exposure PASS
+a pending order can consume the final available risk PASS
+equity giveback also enforces the portfolio cap PASS
+locked SL profit cannot hide large floating-profit giveback PASS
+new risk is reserved before reaching the daily stop PASS
+exact remaining daily budget is allowed PASS
+at the daily loss threshold no fresh entry is allowed PASS
+missing daily history blocks a live daily budget PASS
+daily budget cannot be disabled to bypass the user limit PASS
+daily budget cannot exceed the user six percent ceiling PASS
+one trade cannot exceed three percent even under a larger portfolio cap PASS
+exact user three percent per trade boundary is supported PASS
+a second three percent SL can reserve the remaining six percent day budget PASS
+a new SL cannot take the day beyond six percent PASS
+cumulative daily risk can use exactly the remaining six percent PASS
+cumulative daily risk cannot cross six percent PASS
+a winning trade never refunds cumulative daily risk PASS
+loss-only mode still permits an explicit cumulative-risk opt-result_out PASS
+missing original SL history blocks a cumulative daily budget PASS
+a pending order without a valued SL blocks entry PASS
+a manual position without SL blocks entry PASS
+unknown floating prevents hiding equity giveback PASS
+an incomplete account scan blocks new risk PASS
+symbol-only data cannot authorize an account budget PASS
+disconnected data cannot authorize an account budget PASS
+portfolio percentages use reduced current equity PASS
+negative aggregate risk cannot subsidize a new trade PASS
+negative policy limits do not silently disable safety PASS
+invalid zero candidate risk is rejected PASS
+risk sum overflow fails closed PASS
 no positions shows an explicit waiting state PASS
 live risk panel shows actual ticket and money percentages PASS
 cost treatment and actual entry basis are visible in risk panel PASS
+armed healthy protection has an explicit monitored state PASS
+a fresh heartbeat alone does not imply automatic protection PASS
+a latched emergency overrides the healthy heartbeat PASS
+account pending risk is included in the compact SL total PASS
+unknown pending risk gets a critical text warning PASS
+unknown pending risk never presents a known daily headroom PASS
 missing SL is prominently shown as unknown with partial totals PASS
 display never presents zero capital as a genuine 0 percent risk PASS
 disconnected account data is visibly labelled PASS
@@ -352,6 +404,7 @@ opposite peers conflict and remain vetoed PASS
 none on another peer retains aligned result PASS
 stale peer does not become aligned PASS
 unknown relation is unavailable PASS
+multi timeframe context precedes research even when signal data is missing PASS
 downstream gates not labeled failed on missing data PASS
 failed MTF leaves trigger unevaluated PASS
 missing trigger is wait and leaves SMT unevaluated PASS
@@ -398,4 +451,198 @@ SMT journal payload preserves original confirmation PASS
 SMT journal rejects identity corruption PASS
 SMT journal rejects future confirmation PASS
 SMT journal rejects truncated payload PASS
-ICTCoreFixtures RESULT checks=373 failures=0
+STAT default configuration PASS
+STAT rejects zero horizon PASS
+STAT validates ordered OHLC PASS
+STAT rejects duplicate bars PASS
+STAT rejects malformed OHLC PASS
+STAT creates closed-prefix features PASS
+STAT future bars cannot alter current features PASS
+STAT excludes immature labels PASS
+STAT up label uses horizon close PASS
+STAT down label uses horizon close PASS
+STAT flat label retains neutral class PASS
+STAT recorded spread widens neutral band PASS
+STAT bullish engulfing confirmation PASS
+STAT bullish sweep reclaim confirmation PASS
+STAT breakout confirmation PASS
+STAT first FVG retest PASS
+STAT excludes consumed FVG retest PASS
+STAT builds only mature disjoint samples PASS
+STAT prepares chronological partitions PASS
+STAT purges boundary-crossing training labels PASS
+STAT prepares changed future validation PASS
+STAT scaler and priors fitted on train only PASS
+STAT neural backprop learns separable synthetic features PASS
+STAT validation labels and features cannot train models PASS
+STAT evaluates untouched later partition PASS
+STAT compares both trained models to climatology PASS
+STAT calibration uses a separate partition PASS
+STAT reports validation pattern support only PASS
+STAT current probabilities normalize PASS
+STAT current context changes the forecast PASS
+STAT unfitted model clears readiness PASS
+STAT Wilson interval accounts for small support PASS
+STAT no-support interval remains unknown PASS
+STAT softmax remains finite on extreme logits PASS
+STAT insufficient samples never expose probabilities PASS
+STAT one-class training is rejected PASS
+LIQ selects closest untouched native pair on both sides PASS
+LIQ replay parity checks frozen native identities PASS
+LIQ same price cannot hide different native pool identity PASS
+LIQ retains native lifecycle semantics for renderer PASS
+LIQ near but not touched pool remains eligible PASS
+LIQ pending breakout is not untouched PASS
+LIQ does not invent a missing upper pool PASS
+LIQ exact wick touch excludes native-untouched pool PASS
+LIQ future wick cannot change historical pair PASS
+LIQ respects hidden internal pool category PASS
+LIQ respects hidden external pool category PASS
+LIQ no forecast when all pool categories hidden PASS
+LIQ missing pre-pool history cannot certify untouched PASS
+LIQ missing intraday coverage cannot certify untouched PASS
+LIQ stale snapshot cannot reuse later OHLC PASS
+LIQ newly confirmed pool starts its untouched clock at availability PASS
+LIQ features encode barriers and known long trend PASS
+LIQ post-snapshot price cannot rewrite features PASS
+LIQ future daily trend is forbidden PASS
+LIQ feature window rejects unclassified gaps PASS
+LIQ BSL first survives later SSL hit PASS
+LIQ SSL first survives later BSL hit PASS
+LIQ same-bar two touches stay ambiguous PASS
+LIQ observed open precedes same-bar wicks PASS
+LIQ lower observed open precedes same-bar wicks PASS
+LIQ exact equality counts as first touch PASS
+LIQ incomplete horizon excluded despite early hit PASS
+LIQ timeout keeps third outcome PASS
+LIQ gap inside target path is censored PASS
+LIQ invalid barrier cannot become timeout PASS
+LIQ distance baseline retains trained timeout prior PASS
+LIQ native-feature first-touch samples prepare separately PASS
+LIQ trained first-touch network evaluates held-result_out labels PASS
+LIQ synthetic long-trend signal beats both baselines PASS
+LIQ calibration audit metrics are finite PASS
+LIQ learned BSL-first probability comes from its own network PASS
+LIQ observed training context remains in support PASS
+LIQ unseen barrier geometry cannot publish clipped extrapolation PASS
+LIQ uncalibrated model cannot publish probabilities PASS
+LIQ poor first-touch model cannot pass distance baseline PASS
+FOCUS accepts only confirmed native sweep PASS
+FOCUS rejects not-yet-confirmed evt PASS
+FOCUS respects chart timeframe PASS
+FOCUS respects hidden external liquidity PASS
+FOCUS keeps false breakout distinct PASS
+FOCUS waits at sweep close PASS
+FOCUS freezes confirmed prior low PASS
+FOCUS never reads future candle values PASS
+FOCUS confirms bearish MSS after sweep PASS
+FOCUS timestamps MSS at closed candle PASS
+FOCUS wick-only structure break is insufficient PASS
+FOCUS requires displacement on first close break PASS
+FOCUS optional displacement changes explanation only PASS
+FOCUS rejects pre-sweep broken swing PASS
+FOCUS does not call same-candle break post-sweep MSS PASS
+FOCUS closes beyond sweep invalidate pending MSS PASS
+FOCUS expires on trading candle count PASS
+FOCUS neutral prior structure yields break, not MSS PASS
+FOCUS bullish SSL/MSS mirrors bearish rules PASS
+FOCUS rejects revised native wick PASS
+FOCUS rejects invalid MSS configuration PASS
+FOCUS no synthetic probability before fit PASS
+FOCUS forecasts from confirmation prefix PASS
+FOCUS post-sweep price cannot rewrite forecast features PASS
+FOCUS rejects other-timeframe model PASS
+FOCUS rejects calibration including evt outcomes PASS
+FOCUS rejects training after historical evt PASS
+FOCUS H1 uses confirmed bullish swing structure PASS
+FOCUS SSL arrow aligns with bullish H1 PASS
+FOCUS H1 includes candle closing exactly at reclaim PASS
+FOCUS H1 ignores malformed future OHLC PASS
+FOCUS H1 excludes containing half-closed candle PASS
+FOCUS BSL arrow opposes bullish H1 PASS
+FOCUS H1 rejects invalid OHLC after its close PASS
+FOCUS H1 requires full 120-bar lookback PASS
+FOCUS H1 rejects count beyond history PASS
+FOCUS H1 missing latest closed hour cannot retain old bias PASS
+FOCUS H1 neutral structure is not directional approval PASS
+FOCUS bearish H1 prioritizes BSL downward arrow PASS
+FOCUS H1 invalid evt clears old alignment PASS
+FOCUS aligned H1 outranks newer countertrend arrow PASS
+FOCUS optional H1 preference restores chronological order PASS
+FOCUS missing H1 cannot outrank verified alignment PASS
+FOCUS neutral H1 cannot outrank verified alignment PASS
+FOCUS newest aligned arrow wins within aligned group PASS
+FOCUS same-time alignment prefers higher source timeframe PASS
+FOCUS no directional H1 falls back to newest arrow PASS
+FOCUS invalid evt cannot take a priority slot PASS
+FOCUS valid evt replaces empty priority slot PASS
+analysis defaults are valid PASS
+early analysis accepts partial evidence without requiring all six groups PASS
+analysis does not change native context PASS
+higher analysis threshold suppresses the same candidate PASS
+explicit deep requirement withholds technical-only signals PASS
+validated deep evidence participates once PASS
+opposing evidence reduces mean instead of disappearing PASS
+too little coverage cannot inflate the mean PASS
+one strong group cannot replace the supporting quorum PASS
+observed neutrality stays at fifty and creates no signal PASS
+inclusive score boundary is deterministic PASS
+bearish analysis is symmetric PASS
+lower threshold never overrides opposite MTF PASS
+neutral MTF remains blocked PASS
+neutral HTF remains blocked PASS
+future HTF remains blocked PASS
+missing MTF remains blocked PASS
+stale LTF remains blocked PASS
+duplicate tiers remain blocked PASS
+invalid native context remains blocked PASS
+invalid evidence cannot be renormalized into a signal PASS
+invalid coverage configuration is rejected PASS
+supporting quorum cannot exceed required coverage PASS
+neutral-score threshold is not an analysis preset PASS
+lower advisory threshold increases coverage on the fixed synthetic cohort PASS
+closed price path produces two bounded groups PASS
+invalid unfinished future bar cannot change past evidence PASS
+stale price prefix is not current analysis PASS
+calibrated current DNN contributes its directional probability difference PASS
+DNN from a different timeframe is excluded PASS
+stale DNN is excluded PASS
+future DNN is excluded PASS
+uncalibrated DNN is excluded PASS
+DNN must beat baseline in its own metric PASS
+calibrated non-winning DNN is explicitly experimental in early mode PASS
+future evaluation labels cannot admit DNN PASS
+early experimental mode still rejects future evaluation labels PASS
+result_out of domain features cannot admit DNN PASS
+early domain warning is explicit and receives experimental weight PASS
+invalid probability mass cannot admit DNN PASS
+early experimental mode never accepts invalid probability mass PASS
+native SSL reclaim supports bullish analysis PASS
+simultaneous opposing native events cancel PASS
+future native evt cannot support analysis PASS
+stale native liquidity is missing rather than neutral PASS
+closed reaction to an available native zone supports analysis PASS
+duplicated zones do not multiply a family vote PASS
+invalidated zones do not support analysis PASS
+zone created at the reaction close cannot be a prior retest PASS
+opposite SMT remains negative evidence PASS
+unavailable SMT is not counted as no divergence PASS
+early defaults request actual DL with a lower advisory threshold PASS
+current trained DL plus price produces analysis PASS
+neutral native MTF can accompany explicitly early DL PASS
+strict native context still rejects the same neutral tiers PASS
+conflicting MTF is disclosed rather than preventing all DL analysis PASS
+optional strict early mode keeps the original MTF veto PASS
+missing upper structure does not pretend alignment PASS
+future upper timestamps still reject early analysis PASS
+stale LTF still rejects early analysis PASS
+required DL cannot be replaced by technical heuristics PASS
+neutral dominant DNN does not become a directional arrow PASS
+nearly tied DNN directions remain a watch state PASS
+experimental DL is explicitly identified PASS
+experimental evidence receives a score discount PASS
+experimental DL can be excluded without changing native rules PASS
+price opposition still defeats a weak experimental DNN PASS
+observed no-evt groups do not dilute directional evidence PASS
+early analysis never alters the original context PASS
+ICTCoreFixtures RESULT checks=616 failures=0

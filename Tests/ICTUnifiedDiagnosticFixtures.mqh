@@ -91,6 +91,10 @@ void RunUnifiedDiagnosticFixtures()
    s.signal.symbol=s.symbol; s.signal.asof=s.asof; s.signal.frames.status=ICT_MTF_FULL;
    s.signal.reason="DATA INSUFFICIENT";
    string body=ICTUnifiedDashboardBody(s,"","","");
+   string ordered=ICTUnifiedDashboardBody(s,"","","","[ANALYSIS]\n");
+   Check("multi timeframe context precedes research even when signal data is missing",
+      StringFind(ordered,"[BỐI CẢNH ĐA KHUNG]")==0 && StringFind(ordered,"[ANALYSIS]")>0 &&
+      StringFind(ordered,"[ANALYSIS]")<StringFind(ordered,"[QUYẾT ĐỊNH HTF / MTF / LTF]"));
    Check("downstream gates not labeled failed on missing data",StringFind(body,"HTF Chưa đánh giá / MTF Chưa đánh giá")>=0 &&
       StringFind(body,"Tín hiệu LTF: Chưa đánh giá")>=0 && StringFind(body,"Rủi ro Chưa đánh giá")>=0);
    s.signal.data_ready=true; s.signal.direction=1; s.signal.htf_pass=true; s.signal.mtf_pass=false;

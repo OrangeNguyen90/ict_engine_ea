@@ -306,7 +306,8 @@ string ICTStrongOBDetails(const SICTStrongOrderBlock &z)
       " Xu hướng "+IntegerToString(z.bias_points)+" PD "+IntegerToString(z.pd_points)+" Mới "+IntegerToString(z.freshness_points)+
       "\n"+ICTDashboardText(z.gate_reason)+(z.invalidation_reason!="" ? " | "+ICTDashboardText(z.invalidation_reason) : "");
   }
-string ICTUnifiedDashboardBody(const SICTUnifiedSnapshot &s,const string decision,const string plan,const string reason)
+string ICTUnifiedDashboardBody(const SICTUnifiedSnapshot &s,const string decision,const string plan,const string reason,
+                               const string research_advisory="")
   {
    string body="[BỐI CẢNH ĐA KHUNG]\nChế độ: "+(s.frames.mode==ICT_MTF_AUTO ? "Tự động" : "Thủ công")+
       " | "+(s.frames.status==ICT_MTF_FULL ? "3 khung" : s.frames.status==ICT_MTF_TWO_TIER ? "2 khung" : "1 khung")+"\n";
@@ -320,7 +321,8 @@ string ICTUnifiedDashboardBody(const SICTUnifiedSnapshot &s,const string decisio
       else if(s.tiers[i].reason!="") body+=" | "+ICTDashboardText(s.tiers[i].reason);
       body+="\n";
      }
-   body+="MTF: "+ICTUnifiedStructureText(s.mtf_state)+"\n"+ICTDashboardText(s.reason)+"\n[QUYẾT ĐỊNH HTF / MTF / LTF]\n";
+   body+="MTF: "+ICTUnifiedStructureText(s.mtf_state)+"\n"+ICTDashboardText(s.reason)+"\n";
+   body+=research_advisory+"[QUYẾT ĐỊNH HTF / MTF / LTF]\n";
    SICTSignalResult signal=s.signal;
    bool shared=signal.symbol==s.symbol && signal.asof==s.asof && signal.asof>0;
    if(shared)
@@ -417,10 +419,12 @@ string ICTUnifiedDashboardBody(const SICTUnifiedSnapshot &s,const string decisio
 void ICTRenderUnifiedDashboard(const string prefix,const SICTUnifiedSnapshot &s,const string decision,
                                 const string plan,const string reason,const ENUM_BASE_CORNER corner,
                                 const int x,const int y,const int width,const int height,const int font,
-                                int &page,int &moved_x,int &moved_y,const bool hidden)
+                                int &page,int &moved_x,int &moved_y,const bool hidden,
+                                const string research_advisory="")
   {
    string title="ICT SMART | "+s.symbol+" | Vùng "+ICTUnifiedTF(g_ict_chart_zone_tf);
    ICTRenderPagedPanel(prefix,title,decision,s.valid ? clrGold : clrLightCoral,
-      ICTUnifiedDashboardBody(s,decision,plan,reason),corner,x,y,width,height,font,page,moved_x,moved_y,hidden);
+      ICTUnifiedDashboardBody(s,decision,plan,reason,research_advisory),
+      corner,x,y,width,height,font,page,moved_x,moved_y,hidden);
   }
 #endif

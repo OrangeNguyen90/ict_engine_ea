@@ -1,7 +1,8 @@
 #ifndef ICT_POSITION_RISK_MQH
 #define ICT_POSITION_RISK_MQH
 
-enum ENUM_ICT_POSITION_CAPITAL { ICT_POSITION_BALANCE=0, ICT_POSITION_EQUITY=1 };
+enum ENUM_ICT_POSITION_CAPITAL
+  { ICT_POSITION_BALANCE=0, ICT_POSITION_EQUITY=1, ICT_POSITION_CONSERVATIVE=2 };
 enum ENUM_ICT_POSITION_RISK_LIMIT
   { ICT_RISK_LIMIT_UNKNOWN=-1, ICT_RISK_LIMIT_NORMAL=0, ICT_RISK_LIMIT_WARNING=1, ICT_RISK_LIMIT_CLOSE=2 };
 
@@ -23,13 +24,13 @@ struct SICTPositionRisk
    bool valid,capital_valid,stop_valid,target_valid,floating_valid,rr_valid;
    double costs,floating,floating_percent;
    double net_at_stop,net_at_target,risk_money,risk_percent;
-   double locked_money,locked_percent,target_percent,rr;
+   double locked_money,locked_percent,target_percent,rr,remaining_risk_money;
   };
 
 struct SICTPositionRiskTotals
   {
    int count,unknown_stops,unknown_targets,unknown_floating,invalid_positions;
-   double volume,risk_money,target_money,floating,costs;
+   double volume,risk_money,target_money,floating,costs,remaining_risk_money;
   };
 
 struct SICTPositionRiskSnapshot
@@ -40,6 +41,12 @@ struct SICTPositionRiskSnapshot
    ENUM_ICT_POSITION_CAPITAL capital_mode;
    double balance,equity,capital,cost_per_lot;
    bool connected;
+   int pending_count,unknown_pending;
+   double pending_risk_money,margin,free_margin,margin_level,daily_net;
+   bool daily_valid,margin_valid,protection_online,protection_armed,protection_healthy;
+   bool daily_opened_valid;
+   double daily_opened_risk_money;
+   int protection_state;
    SICTPositionRiskTotals totals;
    SICTPositionRisk positions[];
   };
@@ -51,6 +58,14 @@ double ICTPositionPercent(const double money,const double capital)
   {
    if(!MathIsValidNumber(money) || !ICTPositionCapitalValid(capital)) return 0.0;
    return money/capital*100.0;
+  }
+
+// Never size a new trade from a historic reference larger than today's funds.
+double ICTConservativeRiskCapital(const double reference,const double balance,const double equity)
+  {
+   if(!ICTPositionCapitalValid(reference) || !ICTPositionCapitalValid(balance) ||
+      !ICTPositionCapitalValid(equity)) return 0.0;
+   return MathMin(reference,MathMin(balance,equity));
   }
 
 // Policy only: callers must explicitly choose the loss/risk metric and scope.
@@ -100,6 +115,8 @@ bool ICTCalculatePositionRisk(const SICTPositionRiskInput &exposure,const double
          risk.locked_money=MathMax(0.0,risk.net_at_stop);
          risk.risk_percent=ICTPositionPercent(risk.risk_money,capital);
          risk.locked_percent=ICTPositionPercent(risk.locked_money,capital);
+         if(risk.floating_valid)
+            risk.remaining_risk_money=MathMax(0.0,risk.floating-risk.net_at_stop);
         }
      }
    if(exposure.target_valued && MathIsValidNumber(exposure.target) && exposure.target>0.0 &&
@@ -131,6 +148,46 @@ void ICTAccumulatePositionRisk(const SICTPositionRisk &risk,SICTPositionRiskTota
    if(risk.stop_valid) totals.risk_money+=risk.risk_money; else totals.unknown_stops++;
    if(risk.target_valid) totals.target_money+=risk.net_at_target; else totals.unknown_targets++;
    if(risk.floating_valid) totals.floating+=risk.floating; else totals.unknown_floating++;
+   if(risk.stop_valid && risk.floating_valid) totals.remaining_risk_money+=risk.remaining_risk_money;
+  }
+
+// Both measures matter: loss from entry and additional equity loss at the SL.
+// No profit at one SL may subsidize the loss on a different position.
+bool ICTPositionEntryBudgetAllowed(const SICTPositionRiskSnapshot &s,const double candidate_risk,
+                                    const double reference,const double portfolio_limit,
+                                    const double daily_limit,string &reason,const bool require_daily_risk=true)
+  {
+   reason="";
+   double capital=ICTConservativeRiskCapital(reference,s.balance,s.equity);
+   if(!ICTPositionCapitalValid(capital) || !MathIsValidNumber(candidate_risk) || candidate_risk<=0.0 ||
+      !MathIsValidNumber(portfolio_limit) || portfolio_limit<0.0 || portfolio_limit>100.0 ||
+      !MathIsValidNumber(daily_limit) || daily_limit<=0.0 || daily_limit>6.0 ||
+      candidate_risk>capital*3.0/100.0+1e-8)
+     { reason="Invalid account risk budget"; return false; }
+   if(s.symbol_filter!="" || !s.connected || s.selection_errors>0 || s.totals.invalid_positions>0 ||
+      s.totals.unknown_stops>0 || s.totals.unknown_floating>0 || s.unknown_pending>0)
+     { reason="Account exposure or SL valuation unavailable"; return false; }
+   if(!MathIsValidNumber(s.totals.risk_money) || s.totals.risk_money<0.0 ||
+      !MathIsValidNumber(s.totals.remaining_risk_money) || s.totals.remaining_risk_money<0.0 ||
+      !MathIsValidNumber(s.pending_risk_money) || s.pending_risk_money<0.0)
+     { reason="Invalid account exposure totals"; return false; }
+   double loss=s.totals.risk_money+s.pending_risk_money+candidate_risk;
+   double remaining=s.totals.remaining_risk_money+s.pending_risk_money+candidate_risk;
+   if(!MathIsValidNumber(loss) || !MathIsValidNumber(remaining))
+     { reason="Account exposure overflow"; return false; }
+   if(portfolio_limit>0.0 && MathMax(loss,remaining)>capital*portfolio_limit/100.0+1e-8)
+     { reason="Portfolio SL risk budget exceeded (positions + pending + new trade)"; return false; }
+   // This is today's deal P/L plus all current floating, not a midnight-equity drawdown.
+   // Reserve existing giveback and the new SL before authorizing a fresh entry.
+   if(daily_limit>0.0 && (!s.daily_valid || !MathIsValidNumber(s.daily_net) ||
+      s.daily_net<=-capital*daily_limit/100.0 ||
+      s.daily_net-remaining < -capital*daily_limit/100.0-1e-8))
+     { reason="Daily loss budget exhausted or account history unavailable"; return false; }
+   if(require_daily_risk && (!s.daily_opened_valid || !MathIsValidNumber(s.daily_opened_risk_money) ||
+      s.daily_opened_risk_money<0.0 ||
+      s.daily_opened_risk_money+s.pending_risk_money+candidate_risk>capital*daily_limit/100.0+1e-8))
+     { reason="Daily opened-risk budget exhausted or original SL history unavailable"; return false; }
+   return true;
   }
 
 // Read-only terminal integration. Partial closes naturally use the remaining
@@ -158,6 +215,74 @@ bool ICTReadPositionRisk(const ulong ticket,const double capital,const double co
    return true; // A selected position with an unavailable valuation is still reported.
   }
 
+bool ICTReadAccountDayNet(double &net)
+  {
+   net=0.0;
+   datetime now=TimeCurrent(); MqlDateTime day;
+   if(now<=0 || !TimeToStruct(now,day)) return false;
+   day.hour=0; day.min=0; day.sec=0;
+   if(!HistorySelect(StructToTime(day),now)) return false;
+   int deals=HistoryDealsTotal();
+   for(int i=0;i<deals;i++)
+     {
+      ulong ticket=HistoryDealGetTicket(i);
+      if(ticket==0) return false;
+      ENUM_DEAL_TYPE kind=(ENUM_DEAL_TYPE)HistoryDealGetInteger(ticket,DEAL_TYPE);
+      if(kind!=DEAL_TYPE_BUY && kind!=DEAL_TYPE_SELL) continue;
+      double profit=0,swap=0,commission=0,fee=0;
+      if(!HistoryDealGetDouble(ticket,DEAL_PROFIT,profit) || !HistoryDealGetDouble(ticket,DEAL_SWAP,swap) ||
+         !HistoryDealGetDouble(ticket,DEAL_COMMISSION,commission) || !HistoryDealGetDouble(ticket,DEAL_FEE,fee) ||
+         !MathIsValidNumber(profit) || !MathIsValidNumber(swap) || !MathIsValidNumber(commission) ||
+         !MathIsValidNumber(fee)) return false;
+      net+=profit+swap+commission+fee;
+     }
+   int positions=PositionsTotal();
+   for(int i=0;i<positions;i++)
+     {
+      if(PositionGetTicket(i)==0) return false;
+      double profit=0,swap=0;
+      if(!PositionGetDouble(POSITION_PROFIT,profit) || !PositionGetDouble(POSITION_SWAP,swap) ||
+         !MathIsValidNumber(profit) || !MathIsValidNumber(swap)) return false;
+      net+=profit+swap;
+     }
+   return positions==PositionsTotal() && deals==HistoryDealsTotal() && MathIsValidNumber(net);
+  }
+
+// Reconstruct from broker history on every scan, including after an EA restart.
+// Count entry fills once, even when already closed at TP. Exit deals never refund
+// this budget. A reversal is conservatively charged on the entire INOUT volume.
+bool ICTReadAccountDayOpenedRisk(const double costs,double &risk_money)
+  {
+   risk_money=0.0;
+   if(!MathIsValidNumber(costs) || costs<0.0) return false;
+   datetime now=TimeCurrent(); MqlDateTime day;
+   if(now<=0 || !TimeToStruct(now,day)) return false;
+   day.hour=0; day.min=0; day.sec=0;
+   if(!HistorySelect(StructToTime(day),now)) return false;
+   int count=HistoryDealsTotal();
+   for(int i=0;i<count;i++)
+     {
+      ulong deal=HistoryDealGetTicket(i);
+      if(deal==0) return false;
+      ENUM_DEAL_TYPE kind=(ENUM_DEAL_TYPE)HistoryDealGetInteger(deal,DEAL_TYPE);
+      if(kind!=DEAL_TYPE_BUY && kind!=DEAL_TYPE_SELL) continue;
+      ENUM_DEAL_ENTRY entry_kind=(ENUM_DEAL_ENTRY)HistoryDealGetInteger(deal,DEAL_ENTRY);
+      if(entry_kind!=DEAL_ENTRY_IN && entry_kind!=DEAL_ENTRY_INOUT) continue;
+      ulong order=(ulong)HistoryDealGetInteger(deal,DEAL_ORDER);
+      double price=0,volume=0,stop=0,pnl=0;
+      string symbol=HistoryDealGetString(deal,DEAL_SYMBOL);
+      if(order==0 || symbol=="" || !HistoryDealGetDouble(deal,DEAL_PRICE,price) ||
+         !HistoryDealGetDouble(deal,DEAL_VOLUME,volume) || !HistoryOrderGetDouble(order,ORDER_SL,stop) ||
+         !MathIsValidNumber(price) || price<=0.0 || !MathIsValidNumber(volume) || volume<=0.0 ||
+         !MathIsValidNumber(stop) || stop<=0.0 ||
+         !OrderCalcProfit(kind==DEAL_TYPE_BUY ? ORDER_TYPE_BUY : ORDER_TYPE_SELL,symbol,volume,price,stop,pnl) ||
+         !MathIsValidNumber(pnl)) return false;
+      risk_money+=MathMax(0.0,-pnl)+costs*volume;
+      if(!MathIsValidNumber(risk_money)) return false;
+     }
+   return count==HistoryDealsTotal();
+  }
+
 void ICTReadPositionRiskSnapshot(const string symbol_filter,const ENUM_ICT_POSITION_CAPITAL mode,
                                   const double cost_per_lot,SICTPositionRiskSnapshot &snapshot)
   {
@@ -167,9 +292,15 @@ void ICTReadPositionRiskSnapshot(const string symbol_filter,const ENUM_ICT_POSIT
    snapshot.currency_digits=(int)MathMax(0,MathMin(8,AccountInfoInteger(ACCOUNT_CURRENCY_DIGITS)));
    snapshot.capital_mode=mode; snapshot.balance=AccountInfoDouble(ACCOUNT_BALANCE);
    snapshot.equity=AccountInfoDouble(ACCOUNT_EQUITY);
-   snapshot.capital=(mode==ICT_POSITION_EQUITY ? snapshot.equity : snapshot.balance);
+   snapshot.capital=(mode==ICT_POSITION_EQUITY ? snapshot.equity : mode==ICT_POSITION_CONSERVATIVE ?
+      ICTConservativeRiskCapital(snapshot.balance,snapshot.balance,snapshot.equity) : snapshot.balance);
    snapshot.cost_per_lot=cost_per_lot;
    snapshot.connected=TerminalInfoInteger(TERMINAL_CONNECTED)!=0;
+   snapshot.margin=AccountInfoDouble(ACCOUNT_MARGIN);
+   snapshot.free_margin=AccountInfoDouble(ACCOUNT_MARGIN_FREE);
+   snapshot.margin_level=AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
+   snapshot.margin_valid=MathIsValidNumber(snapshot.margin) && snapshot.margin>=0.0 &&
+      MathIsValidNumber(snapshot.free_margin) && MathIsValidNumber(snapshot.margin_level);
    int total=PositionsTotal();
    for(int i=0;i<total;i++)
      {
@@ -184,5 +315,40 @@ void ICTReadPositionRiskSnapshot(const string symbol_filter,const ENUM_ICT_POSIT
       snapshot.positions[count]=risk;
       ICTAccumulatePositionRisk(risk,snapshot.totals);
      }
+   if(total!=PositionsTotal()) snapshot.selection_errors++;
+   int pending=OrdersTotal();
+   for(int i=0;i<pending;i++)
+     {
+      if(OrderGetTicket(i)==0) { snapshot.selection_errors++; continue; }
+      string symbol=OrderGetString(ORDER_SYMBOL);
+      if(symbol_filter!="" && symbol!=symbol_filter) continue;
+      snapshot.pending_count++;
+      ENUM_ORDER_TYPE kind=(ENUM_ORDER_TYPE)OrderGetInteger(ORDER_TYPE);
+      bool buy=kind==ORDER_TYPE_BUY_LIMIT || kind==ORDER_TYPE_BUY_STOP || kind==ORDER_TYPE_BUY_STOP_LIMIT;
+      bool sell=kind==ORDER_TYPE_SELL_LIMIT || kind==ORDER_TYPE_SELL_STOP || kind==ORDER_TYPE_SELL_STOP_LIMIT;
+      double entry=OrderGetDouble(ORDER_PRICE_OPEN),stop=OrderGetDouble(ORDER_SL);
+      if(kind==ORDER_TYPE_BUY_STOP_LIMIT || kind==ORDER_TYPE_SELL_STOP_LIMIT)
+         entry=OrderGetDouble(ORDER_PRICE_STOPLIMIT);
+      double volume=OrderGetDouble(ORDER_VOLUME_CURRENT),pnl=0.0;
+      if((!buy && !sell) || !MathIsValidNumber(entry) || entry<=0.0 || !MathIsValidNumber(stop) || stop<=0.0 ||
+         !MathIsValidNumber(volume) || volume<=0.0 || !MathIsValidNumber(cost_per_lot) || cost_per_lot<0.0 ||
+         (buy && stop>=entry) || (sell && stop<=entry) ||
+         !OrderCalcProfit(buy ? ORDER_TYPE_BUY : ORDER_TYPE_SELL,symbol,volume,entry,stop,pnl) ||
+         !MathIsValidNumber(pnl) || pnl>0.0 || !MathIsValidNumber(pnl-volume*cost_per_lot))
+        { snapshot.unknown_pending++; continue; }
+      snapshot.pending_risk_money+=MathMax(0.0,-pnl+volume*cost_per_lot);
+     }
+   if(pending!=OrdersTotal()) snapshot.selection_errors++;
+   snapshot.daily_valid=ICTReadAccountDayNet(snapshot.daily_net);
+   snapshot.daily_opened_valid=ICTReadAccountDayOpenedRisk(cost_per_lot,snapshot.daily_opened_risk_money);
+  }
+
+bool ICTLiveEntryBudgetAllowed(const double reference,const double candidate_risk,const double costs,
+                                const double portfolio_limit,const double daily_limit,string &reason,
+                                const bool require_daily_risk=true)
+  {
+   SICTPositionRiskSnapshot snapshot;
+   ICTReadPositionRiskSnapshot("",ICT_POSITION_CONSERVATIVE,costs,snapshot);
+   return ICTPositionEntryBudgetAllowed(snapshot,candidate_risk,reference,portfolio_limit,daily_limit,reason,require_daily_risk);
   }
 #endif

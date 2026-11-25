@@ -58,7 +58,7 @@ bool SRMPValidatePositionPlanRisk(const double gross_loss,const double gross_rew
       !MathIsValidNumber(estimated_cost) || !MathIsValidNumber(reference) ||
       !MathIsValidNumber(max_risk_percent) || !MathIsValidNumber(min_rr) ||
       gross_loss>=0 || gross_reward<=0 || estimated_cost<0 || reference<=0 ||
-      max_risk_percent<=0 || max_risk_percent>2 || min_rr<2)
+      max_risk_percent<=0 || max_risk_percent>3 || min_rr<2)
       return false;
    double loss=-gross_loss+estimated_cost,reward=gross_reward-estimated_cost;
    if(loss<=0 || reward<=0 || loss>reference*max_risk_percent/100.0+1e-8 || reward/loss+1e-9<min_rr)

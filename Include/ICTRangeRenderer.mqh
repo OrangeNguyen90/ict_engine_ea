@@ -3,6 +3,11 @@
 #include "ICTRangeTypes.mqh"
 #include "DashboardComponents.mqh"
 #include "ICTDashboardPanel.mqh"
+
+input group "Untouched BSL / SSL chart colors"
+input color Range_Untouched_BSL_Color=C'217,119,6'; // Amber; adjusted for chart contrast.
+input color Range_Untouched_SSL_Color=C'37,99,235'; // Blue; adjusted for chart contrast.
+
 int g_range_panel_page=0,g_range_panel_x=-1,g_range_panel_y=-1;
 bool g_range_panel_hidden=false;
 
@@ -41,8 +46,11 @@ void IRReconcileLiquidityObjects(const string prefix,const string &keep[])
       if(!found) ObjectDelete(0,name);
      }
   }
+string IRLiquidityCandleKey(const datetime wick_time,const int side)
+  { return "|"+IntegerToString((long)wick_time)+"_"+IntegerToString(side)+"|"; }
 void ICTRenderRangeLiquidityEvents(const string prefix,const SICTRangeSnapshot &s,
-                                   const bool show_irl,const bool show_erl,const int maximum=24)
+                                   const bool show_irl,const bool show_erl,const int maximum=24,
+                                   const string focused_candles="")
   {
    string keep[]; int drawn=0;
    double tick=SymbolInfoDouble(s.symbol,SYMBOL_TRADE_TICK_SIZE);
@@ -52,6 +60,11 @@ void ICTRenderRangeLiquidityEvents(const string prefix,const SICTRangeSnapshot &
       bool external=e.membership==IR_OUTSIDE || e.membership==IR_BOUNDARY;
       if(e.bar_time<s.liquidity_display_start || e.confirmed_at>s.as_of ||
          (external ? !show_erl : e.membership!=IR_INTERNAL || !show_irl)) continue;
+      // A focused annotation replaces duplicate tiny sweep marks on this wick.
+      // The native event, lifecycle and all non-sweep observations stay intact.
+      if(e.type==IR_EVENT_LIQUIDITY_SWEEP &&
+         StringFind(focused_candles,IRLiquidityCandleKey(e.wick_time,e.side))>=0)
+        { drawn++; continue; }
       string id=prefix+IntegerToString((long)IRLiquidityObjectHash(e.id));
       string arrow=id+"A",wick=id+"W",label=id+"T";
       int direction=(e.type==IR_EVENT_LIQUIDITY_SWEEP || e.type==IR_EVENT_FALSE_BREAKOUT ? -e.side : e.side);
@@ -81,7 +94,7 @@ void ICTRenderRangeLiquidityEvents(const string prefix,const SICTRangeSnapshot &
 
 void ICTRenderSweepSequence(const string prefix,const SICTRangeSnapshot &s,const int maximum,
                             const bool show1,const bool show2,const bool show_more,
-                            const bool multi,const bool connect)
+                            const bool multi,const bool connect,const string focused_candles="")
   {
    int drawn=0;
    for(int i=0;i<ICT_SWEEP_SNAPSHOT_MAX;i++)
@@ -90,6 +103,9 @@ void ICTRenderSweepSequence(const string prefix,const SICTRangeSnapshot &s,const
       if(!s.valid || i>=s.sweep_event_count)
         { ObjectDelete(0,label); ObjectDelete(0,line); continue; }
       SICTSweepRecord e=s.sweep_events[i];
+      if(e.status==ICT_SWEEP_CONFIRMED &&
+         StringFind(focused_candles,IRLiquidityCandleKey(e.event_time,e.side))>=0)
+        { ObjectDelete(0,label); ObjectDelete(0,line); continue; }
       bool enabled=(e.number==1 ? show1 : e.number==2 ? show2 && multi : show_more && multi);
       // Reserve capacity for first/second sweeps in later pools before drawing
       // less important #3+ labels; this keeps the double-sweep pair visible.
@@ -141,10 +157,11 @@ void ICTRenderSweepSequence(const string prefix,const SICTRangeSnapshot &s,const
 void ICTRenderRange(const string prefix,const SICTRangeSnapshot &s,
                       const bool show_range,const bool show_irl,const bool show_erl,
                       const bool show_targets,const bool show_rotation,
-                       const bool active_levels_only=false,const int maximum_liquidity_events=24)
+                       const bool active_levels_only=false,const int maximum_liquidity_events=24,
+                       const string focused_candles="")
   {
    if(!s.valid || !s.range.valid) { ObjectsDeleteAll(0,prefix); return; }
-    ICTRenderRangeLiquidityEvents(prefix+"LE_",s,show_irl,show_erl,maximum_liquidity_events);
+    ICTRenderRangeLiquidityEvents(prefix+"LE_",s,show_irl,show_erl,maximum_liquidity_events,focused_candles);
    datetime edge=s.as_of; // Real last confirmed timestamp; no fixed bar-ratio projection across sessions.
    RMContextLine(prefix+"RH",show_range ? s.range.high : 0,clrOrange,"Range High | "+IRTimeframe(s.range.timeframe)+" | "+s.range.id);
    RMContextLine(prefix+"RL",show_range ? s.range.low : 0,clrDeepSkyBlue,"Range Low | "+IRTimeframe(s.range.timeframe)+" | "+s.range.id);
@@ -157,6 +174,8 @@ void ICTRenderRange(const string prefix,const SICTRangeSnapshot &s,
          "Range "+EnumToString(s.range.timeframe)+" v"+IntegerToString(s.range.version),clrDarkGoldenrod);
      }
    else { ObjectDelete(0,prefix+"PREM"); ObjectDelete(0,prefix+"DISC"); ObjectDelete(0,prefix+"LABEL"); }
+   color background=(color)ChartGetInteger(0,CHART_COLOR_BACKGROUND);
+   bool dark=ICTChartLuminance(background)<0.179;
    for(int i=0;i<ICT_RANGE_LEVELS;i++)
      {
       string name=prefix+"L"+IntegerToString(i),label=name+"T";
@@ -169,11 +188,19 @@ void ICTRenderRange(const string prefix,const SICTRangeSnapshot &s,
       if(!visible) { ObjectDelete(0,name); ObjectDelete(0,label); continue; }
       SICTRangeLevel l=s.levels[i];
       color ink=(l.state>=IR_SWEPT ? clrGray : (l.side>0 ? clrDarkOrange : clrSteelBlue));
+      bool untouched=ICTRangeLevelUntouched(l,s.as_of);
+      if(untouched)
+         ink=ICTChartReadableColor(l.side>0 ? Range_Untouched_BSL_Color : Range_Untouched_SSL_Color,background,dark);
        string category=(external ? "ERL " : "IRL ")+IRTimeframe(l.timeframe)+" "+(l.side>0 ? "BSL " : "SSL ");
        string details=category+l.name+" "+ICTRangeLevelText(l.state)+" | sweeps "+IntegerToString(l.sweep_count);
        RMContextLine(name,l.price,ink,details+" | "+l.id+" | "+l.range_id);
        RMContextMarker(label,edge,l.price,details,ink);
-       ObjectSetInteger(0,name,OBJPROP_WIDTH,l.id==s.source_pool_id || l.id==s.target1_pool_id || l.id==s.target2_pool_id ? 2 : 1);
+       ICTChartLabelBold(label,untouched);
+       // MT5 renders non-solid line styles only at a width of one pixel.
+       ObjectSetInteger(0,name,OBJPROP_WIDTH,untouched ? 1 :
+          (l.id==s.source_pool_id || l.id==s.target1_pool_id || l.id==s.target2_pool_id ? 2 : 1));
+       ObjectSetInteger(0,name,OBJPROP_STYLE,untouched ? STYLE_DASH : STYLE_DOT);
+       ObjectSetInteger(0,name,OBJPROP_BACK,!untouched);
      }
     double source_price=0; bool source_visible=false;
     for(int i=0;i<s.liquidity_event_count;i++)
@@ -251,16 +278,21 @@ void ICTRenderRange(const string prefix,const SICTRangeSnapshot &s,
 void ICTRenderRangeDashboard(const string prefix,const SICTRangeSnapshot &s,
                               const ENUM_BASE_CORNER corner,const int margin_x,const int margin_y,
                               const int requested_width,const int requested_height,const int font_size,
-                              const bool show_market=true,const bool show_ict=true,const bool show_plan=true)
+                              const bool show_market=true,const bool show_ict=true,const bool show_plan=true,
+                              const string research_advisory="")
   {
    string title="ICT IRL / ERL | "+s.symbol+" | "+IRTimeframe(s.ltf);
    string status=(s.valid ? (s.proposed_action>0 ? "ƯU TIÊN MUA" : s.proposed_action<0 ? "ƯU TIÊN BÁN" : "KHÔNG GIAO DỊCH")+
                   StringFormat(" | Điểm %d/100",s.score) : "DỮ LIỆU CHƯA SẴN SÀNG");
    color status_ink=(!s.valid ? C'247,135,140' : (s.proposed_action>0 ? C'105,218,154' :
                      (s.proposed_action<0 ? C'247,135,140' : C'250,201,91')));
+   string context="[BỐI CẢNH ĐA KHUNG]\nHTF "+IRTimeframe(s.range.timeframe)+": "+
+      (s.htf_bias>0 ? "Tăng" : s.htf_bias<0 ? "Giảm" : "Trung tính / chưa rõ")+
+      "\nMTF "+IRTimeframe(s.mtf)+": "+(s.structure_confirmed ? "Cấu trúc đã xác nhận" : "Chờ cấu trúc")+
+      " | LTF "+IRTimeframe(s.ltf)+"\n";
    if(!s.valid)
      {
-      string error_body="[TRẠNG THÁI DỮ LIỆU]\n"+ICTDashboardText(s.reason)+"\n[KHUNG THỜI GIAN PHÂN TÍCH]\nHTF: "+IRTimeframe(s.range.timeframe)+
+      string error_body=context+research_advisory+"[TRẠNG THÁI DỮ LIỆU]\n"+ICTDashboardText(s.reason)+"\n[KHUNG THỜI GIAN PHÂN TÍCH]\nHTF: "+IRTimeframe(s.range.timeframe)+
          " | MTF: "+IRTimeframe(s.mtf)+" | LTF: "+IRTimeframe(s.ltf)+
          "\nĐang chờ dữ liệu nến đóng hợp lệ.";
       ICTRenderPagedPanel(prefix,title,status,status_ink,error_body,corner,margin_x,margin_y,
@@ -268,7 +300,7 @@ void ICTRenderRangeDashboard(const string prefix,const SICTRangeSnapshot &s,
          g_range_panel_x,g_range_panel_y,g_range_panel_hidden);
       return;
      }
-   string body="[TRẠNG THÁI]\nDiễn biến: "+ICTDashboardText(ICTRangePhaseText(s.phase))+"\n";
+   string body=context+research_advisory+"[TRẠNG THÁI]\nDiễn biến: "+ICTDashboardText(ICTRangePhaseText(s.phase))+"\n";
    if(show_market)
      {
       body+="[THỊ TRƯỜNG / VÙNG GIÁ]\n";

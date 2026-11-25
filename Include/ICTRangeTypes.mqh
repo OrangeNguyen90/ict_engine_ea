@@ -142,6 +142,16 @@ struct SICTRangeLiquidityEvent
    double level,wick,close;
   };
 
+// Native lifecycle eligibility only. A first-touch forecast additionally checks
+// actual closed wicks since available_at; penetration tolerances are not touches.
+bool ICTRangeLevelUntouched(const SICTRangeLevel &l,const datetime asof)
+  {
+   return l.id!="" && l.available_at>0 && l.available_at<=asof &&
+      MathIsValidNumber(l.price) && l.price>0 && (l.side==1 || l.side==-1) &&
+      (l.state==IR_UNTOUCHED || l.state==IR_APPROACHING) &&
+      l.last_event==IR_EVENT_NONE && l.sweep_count==0 && !l.candidate && l.outside_closes==0;
+  }
+
 struct SICTRangeZone
   {
    string id,range_id;

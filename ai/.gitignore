@@ -4,3 +4,7 @@ __pycache__/
 *.py[cod]
 *.sqlite3
 staticfiles/
+research-data/
+research-runs/
+research-models/
+prediction-feeds/

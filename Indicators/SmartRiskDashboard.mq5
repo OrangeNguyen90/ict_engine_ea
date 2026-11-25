@@ -20,8 +20,8 @@
 #include "../Include/ICTUnifiedBridge.mqh"
 
 input string Instance_ID="A";                    // Unique per chart when using multiple copies
-input double Risk_Per_Trade=1.0;                // Percent of reference capital
-input double Max_Risk_Per_Trade=2.0;            // Hard preview cap
+input double Risk_Per_Trade=0.25;               // Percent of reference capital
+input double Max_Risk_Per_Trade=3.0;            // User ceiling; target may be lower
 input double Minimum_RR=2.0;
 input double Preferred_Risk_Reward=3.0;        // Default target when resetting a plan
 input int Default_Stop_Points=200;

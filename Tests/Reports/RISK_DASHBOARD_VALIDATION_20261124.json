@@ -1,0 +1,59 @@
+﻿{
+    "GeneratedUtc":  "2026-11-24T04:13:30.3228161Z",
+    "TradeRiskCeilingPercent":  3,
+    "DailyRiskCeilingPercent":  6,
+    "DefaultTargetRiskPercent":  0.25,
+    "CumulativeDailyRiskDefault":  true,
+    "CoreChecks":  616,
+    "CoreFailures":  0,
+    "NativeCompilePrograms":  30,
+    "NativeCompileErrors":  0,
+    "NativeCompileWarnings":  0,
+    "SourceCopiesVerified":  107,
+    "SourceMismatches":  0,
+    "NativeVisualAcceptance":  "NOT VERIFIED: isolated script produced no PNG/completion; Computer Use native pipe unavailable",
+    "BrokerRuntimeAcceptance":  "NOT VERIFIED",
+    "InstalledTradingTerminalModified":  false,
+    "SourceHashes":  [
+                         {
+                             "Path":  "Experts/ICTDecisionSupportEA.mq5",
+                             "SHA256":  "5D99E33AB65823F25CD4900F0B6073CDADD9D647AF80F76912FD93FA57FAD41C"
+                         },
+                         {
+                             "Path":  "Experts/ICTAutoTraderEA.mq5",
+                             "SHA256":  "6138A1D5F27BE348C482EA104A10A22FDAA0D1989509B3CFD3B7AA205F84ED47"
+                         },
+                         {
+                             "Path":  "Experts/RiskCalculationService.mq5",
+                             "SHA256":  "72A6E193A8E55B7C31AB17E779B696AFF5BA1E0358F15A61D12F12235B1C339B"
+                         },
+                         {
+                             "Path":  "Include/ICTPositionRisk.mqh",
+                             "SHA256":  "C29AF5329356D1625CAD9D97C6DBA39997031C148E3634F0E8D7506EFD19C157"
+                         },
+                         {
+                             "Path":  "Include/ICTPositionRiskRenderer.mqh",
+                             "SHA256":  "C1600F7062BA698B18D0CD2766D8F2FA19BDA6AE8270C1F167156D4ABD0416E4"
+                         },
+                         {
+                             "Path":  "Include/ICTDecisionEngine.mqh",
+                             "SHA256":  "B1C352CF1FB2F24412C747248FF31CB0F00B2E583EF97DE887C67D505E36E44E"
+                         },
+                         {
+                             "Path":  "Include/SmartAutoPositionSLTP.mqh",
+                             "SHA256":  "FB0A40585A6E86395C8622CB5FD5C4818F6ED6C0A16BF78AC23B5AF10F614061"
+                         },
+                         {
+                             "Path":  "Include/PositionPlanValidation.mqh",
+                             "SHA256":  "0D8CCD6F82D35FEAF87C51FD7E1F84E4B8A4E6F0162EB02DB0987B2531389189"
+                         },
+                         {
+                             "Path":  "Include/RiskCalculator.mqh",
+                             "SHA256":  "4C202493D2164189E2FE5B389BE95C811A24A559A5669B1A1A177D2ABBC20E08"
+                         },
+                         {
+                             "Path":  "Include/TradeAdvisor.mqh",
+                             "SHA256":  "ED9429AB86B326F86EC9A93AF772ADC9858DCB07BA01646EDF61B76EEC6FD2D5"
+                         }
+                     ]
+}

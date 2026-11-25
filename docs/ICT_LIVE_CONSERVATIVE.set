@@ -1,0 +1,19 @@
+; ICTDecisionSupportEA / ICTSmartDecisionEngineEA 1.11
+; Conservative starting profile; review broker-specific spread, costs and slippage.
+; Loading this file does not authorize order execution or emergency closing.
+Risk_Per_Trade=0.25
+Maximum_Risk_Per_Trade=3.0
+Minimum_RR=2.0
+Daily_Loss_Limit_Percent=6.0
+Daily_Risk_Budget_Enable=true
+Portfolio_Risk_Limit_Percent=3.0
+Maximum_Quote_Age_Seconds=10
+Show_Position_Risk=true
+Position_Risk_All_Symbols=true
+Position_Risk_Capital=2
+Position_Risk_Corner=1
+Position_Risk_X=12
+Position_Risk_Y=60
+Position_Risk_Width=420
+Position_Risk_Height=420
+Dashboard_Font_Size=11

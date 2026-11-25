@@ -1,0 +1,2 @@
+# Optional offline models, kept separate from Django and the MT5 collector.
+scikit-learn>=1.5,<2

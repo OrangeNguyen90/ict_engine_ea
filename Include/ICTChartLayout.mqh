@@ -9,6 +9,8 @@ struct SICTChartLabel
    datetime time;
    double price;
    color ink;
+   int font_size; // Zero keeps the existing global chart font.
+   bool bold;
   };
 struct SICTChartRect { int left,top,right,bottom; };
 struct SICTChartZone { datetime first,last; double low,high; };
@@ -112,6 +114,21 @@ void ICTChartRegisterLabel(const string name,const datetime time,const double pr
    g_ict_chart_labels[index].name=name;
    g_ict_chart_labels[index].time=time; g_ict_chart_labels[index].price=price;
    g_ict_chart_labels[index].text=text; g_ict_chart_labels[index].ink=ink;
+   g_ict_chart_labels[index].font_size=0;
+   g_ict_chart_labels[index].bold=false;
+  }
+
+void ICTChartLabelBold(const string name,const bool bold)
+  {
+   ObjectSetString(0,name,OBJPROP_FONT,bold ? "Segoe UI Semibold" : "Segoe UI");
+   for(int i=0;i<ArraySize(g_ict_chart_labels);i++)
+      if(g_ict_chart_labels[i].name==name) { g_ict_chart_labels[i].bold=bold; return; }
+  }
+
+void ICTChartLabelFont(const string name,const int size)
+  {
+   for(int i=0;i<ArraySize(g_ict_chart_labels);i++)
+      if(g_ict_chart_labels[i].name==name) { g_ict_chart_labels[i].font_size=size; return; }
   }
 
 double ICTChartChannel(const int channel)
@@ -141,6 +158,7 @@ color ICTChartReadableColor(const color ink,const color background,const bool da
 
 int ICTChartLabelPriority(const string name)
   {
+   if(StringFind(name,"sweepfocus_")>=0) return 0;
    if(StringFind(name,"signals_")>=0) return 0;
    if(StringFind(name,"sweep")>=0 || StringFind(name,"LE_")>=0) return 1;
    if(StringFind(name,"ob_")>=0 || StringFind(name,"range_Z")>=0) return 2;
@@ -170,24 +188,26 @@ void ICTChartLayoutApply(const string panel_prefix,const string second_panel_pre
    color background=(color)ChartGetInteger(0,CHART_COLOR_BACKGROUND);
    // Choose the black/white endpoint with the greater possible contrast.
    bool dark=ICTChartLuminance(background)<0.179;
-   TextSetFont("Segoe UI",-g_ict_chart_font*10,0);
    for(int priority=0;priority<5;priority++)
       for(int i=0;i<ArraySize(g_ict_chart_labels);i++)
         {
          SICTChartLabel label=g_ict_chart_labels[i];
-         if(ICTChartLabelPriority(label.name)!=priority || ObjectFind(0,label.name)<0) continue;
+         if((label.bold ? 1 : ICTChartLabelPriority(label.name))!=priority || ObjectFind(0,label.name)<0) continue;
+         int font=(label.font_size>0 ? label.font_size : g_ict_chart_font);
+         string face=(label.bold ? "Segoe UI Semibold" : "Segoe UI");
+         TextSetFont(face,-font*10,0);
          int x=0,y=0; uint width=0,height=0;
          string display=label.text;
          int max_width=(int)MathMax(80,MathMin(260,cw/2));
-         if(!TextGetSize(display,width,height)) { width=(uint)(StringLen(display)*g_ict_chart_font); height=(uint)(g_ict_chart_font*2); }
+         if(!TextGetSize(display,width,height)) { width=(uint)(StringLen(display)*font); height=(uint)(font*2); }
          while((int)width>max_width && StringLen(display)>4)
            {
             display=StringSubstr(display,0,StringLen(display)-1);
             string shortened=display+"...";
-            if(!TextGetSize(shortened,width,height)) width=(uint)(StringLen(shortened)*g_ict_chart_font);
+            if(!TextGetSize(shortened,width,height)) width=(uint)(StringLen(shortened)*font);
            }
          if(display!=label.text) display+="...";
-         int w=(int)width+8,h=(int)MathMax((int)height,g_ict_chart_font+4)+4;
+         int w=(int)width+8,h=(int)MathMax((int)height,font+4)+4;
          bool placed=false; SICTChartRect candidate={0,0,0,0};
          if(ChartTimePriceToXY(0,0,label.time,label.price,x,y) && x>=0 && x<cw && y>=0 && y<ch)
             placed=ICTChartFindLabelRect(x,y,w,h,cw,ch,occupied,candidate);
@@ -200,8 +220,8 @@ void ICTChartLayoutApply(const string panel_prefix,const string second_panel_pre
             ObjectSetInteger(0,label.name,OBJPROP_ANCHOR,ANCHOR_LEFT_UPPER);
             ObjectSetInteger(0,label.name,OBJPROP_XDISTANCE,candidate.left+4);
             ObjectSetInteger(0,label.name,OBJPROP_YDISTANCE,candidate.top+2);
-            ObjectSetString(0,label.name,OBJPROP_FONT,"Segoe UI");
-            ObjectSetInteger(0,label.name,OBJPROP_FONTSIZE,g_ict_chart_font);
+            ObjectSetString(0,label.name,OBJPROP_FONT,face);
+            ObjectSetInteger(0,label.name,OBJPROP_FONTSIZE,font);
             ObjectSetInteger(0,label.name,OBJPROP_COLOR,ICTChartReadableColor(label.ink,background,dark));
             ObjectSetString(0,label.name,OBJPROP_TEXT,display);
             ObjectSetInteger(0,label.name,OBJPROP_TIMEFRAMES,OBJ_ALL_PERIODS);

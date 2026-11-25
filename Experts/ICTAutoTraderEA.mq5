@@ -1,5 +1,5 @@
 #property strict
-#property version "1.30"
+#property version "1.31"
 #property description "Experimental ICT automatic entry; requires separate account protection EA."
 
 #include "../Include/TradeAdvisor.mqh"
@@ -17,8 +17,12 @@ input ENUM_TIMEFRAMES Context_Timeframe=PERIOD_H4;
 input ENUM_TIMEFRAMES Structure_Timeframe=PERIOD_H1;
 input ENUM_TIMEFRAMES Setup_Timeframe=PERIOD_M15;
 input ENUM_TIMEFRAMES Trigger_Timeframe=PERIOD_M5;
-input double Risk_Percent=1.0;
-input double Max_Risk_Percent=2.0;
+input double Risk_Percent=0.25;
+input double Max_Risk_Percent=3.0;
+input double Daily_Loss_Limit_Percent=6.0;
+input bool Daily_Risk_Budget_Enable=true;
+input double Portfolio_Risk_Limit_Percent=3.0;
+input double Maximum_Margin_Usage_Percent=20.0; // Broker OrderCheck margin / equity; 0 disables this gate.
 input double Minimum_RR=2.0;
 input double Max_Spread_Points=30.0;
 input double Commission_Per_Lot=0.0;
@@ -118,7 +122,10 @@ int OnInit()
       !MathIsValidNumber(Minimum_RR) || !MathIsValidNumber(Max_Spread_Points) ||
       !MathIsValidNumber(Commission_Per_Lot) || !MathIsValidNumber(Cost_Buffer_Per_Lot) ||
       !MathIsValidNumber(Stop_Slippage_Points) || Risk_Percent<=0 || Risk_Percent>Max_Risk_Percent ||
-      Max_Risk_Percent>2 || Minimum_RR<2 || Max_Spread_Points<=0 ||
+      !MathIsValidNumber(Daily_Loss_Limit_Percent) || Daily_Loss_Limit_Percent<=0 || Daily_Loss_Limit_Percent>6 ||
+      !MathIsValidNumber(Portfolio_Risk_Limit_Percent) || Portfolio_Risk_Limit_Percent<0 || Portfolio_Risk_Limit_Percent>100 ||
+      !MathIsValidNumber(Maximum_Margin_Usage_Percent) || Maximum_Margin_Usage_Percent<0 || Maximum_Margin_Usage_Percent>100 ||
+      Max_Risk_Percent>3 || Minimum_RR<2 || Max_Spread_Points<=0 ||
       Commission_Per_Lot<0 || Cost_Buffer_Per_Lot<0 || Stop_Slippage_Points<0 ||
       Max_Entry_Deviation_Points<0 || Max_Quote_Age_Seconds<1 ||
       Minimum_Decision_Evidence_Score<0 || Minimum_Decision_Evidence_Score>100)
@@ -160,9 +167,10 @@ void EvaluateEntry()
    double reference=0;
    if(!ProtectionReady(reference))
      { ReportStatus("BLOCKED: protection offline, unhealthy or locked (Tester: enable Tester_Simulated_Protection)"); return; }
+   double risk_capital=ICTConservativeRiskCapital(reference,AccountInfoDouble(ACCOUNT_BALANCE),AccountInfoDouble(ACCOUNT_EQUITY));
    STradeAdvice a;
    bool analyzed=SRMPAnalyzeAdvice(_Symbol,Context_Timeframe,Structure_Timeframe,Setup_Timeframe,Trigger_Timeframe,
-                         reference,Risk_Percent,Max_Risk_Percent,Minimum_RR,Max_Spread_Points,
+                         risk_capital,Risk_Percent,Max_Risk_Percent,Minimum_RR,Max_Spread_Points,
                          Commission_Per_Lot,Cost_Buffer_Per_Lot,Stop_Slippage_Points,Max_Quote_Age_Seconds,a,
                          SimulatedProtection(),Require_Latest_H1_BOS);
    string status=StringFormat("%s: %s | Auto entry %s",a.status==SRMP_TRADE_READY ? "TRADE READY" :
@@ -215,9 +223,13 @@ void EvaluateEntry()
    adverse=NormalizeDouble((buy?MathCeil(adverse/tick):MathFloor(adverse/tick))*tick,digits);
    SRiskResult risk;
    if(!CalculateRisk(_Symbol,buy?RM_BUY:RM_SELL,adverse,a.stop_loss,a.take_profit,
-                     reference,Risk_Percent,Max_Risk_Percent,Minimum_RR,Commission_Per_Lot,
+                     risk_capital,Risk_Percent,Max_Risk_Percent,Minimum_RR,Commission_Per_Lot,
                      Cost_Buffer_Per_Lot,Stop_Slippage_Points,Max_Quote_Age_Seconds,risk))
      { ReportStatus("BLOCKED: adverse-entry risk gate: "+risk.reason); return; }
+   string budget_reason;
+   if(!ICTLiveEntryBudgetAllowed(reference,risk.risk_money,Commission_Per_Lot+Cost_Buffer_Per_Lot,
+      Portfolio_Risk_Limit_Percent,Daily_Loss_Limit_Percent,budget_reason,Daily_Risk_Budget_Enable))
+     { ReportStatus("BLOCKED: "+budget_reason); return; }
    long mode=SymbolInfoInteger(_Symbol,SYMBOL_ORDER_MODE);
    if((mode & SYMBOL_ORDER_MARKET)==0 || (mode & SYMBOL_ORDER_SL)==0 || (mode & SYMBOL_ORDER_TP)==0)
      { ReportStatus("BLOCKED: symbol does not support market orders with SL/TP"); return; }
@@ -233,9 +245,17 @@ void EvaluateEntry()
    else { Print("No supported filling mode"); return; }
    req.comment="ICT auto";
    if(!OrderCheck(req,check) || check.retcode!=0) { PrintFormat("Entry check rejected: %u %s",check.retcode,check.comment); return; }
+   if(Maximum_Margin_Usage_Percent>0.0 && (!MathIsValidNumber(check.equity) || check.equity<=0.0 ||
+      !MathIsValidNumber(check.margin) || check.margin<0.0 || !MathIsValidNumber(check.margin_free) ||
+      check.margin_free<0.0 || check.margin/check.equity*100.0>Maximum_Margin_Usage_Percent))
+     { ReportStatus("BLOCKED: projected margin usage exceeds account budget"); return; }
    double checked_reference=0;
    if(!ProtectionReady(checked_reference) || checked_reference!=reference || PositionsTotal()>0 || OrdersTotal()>0)
      { ReportStatus("BLOCKED: protection/reference/exposure changed before send"); return; }
+   if(ICTConservativeRiskCapital(reference,AccountInfoDouble(ACCOUNT_BALANCE),AccountInfoDouble(ACCOUNT_EQUITY))<risk_capital ||
+      !ICTLiveEntryBudgetAllowed(reference,risk.risk_money,Commission_Per_Lot+Cost_Buffer_Per_Lot,
+      Portfolio_Risk_Limit_Percent,Daily_Loss_Limit_Percent,budget_reason,Daily_Risk_Budget_Enable))
+     { ReportStatus("BLOCKED: account risk budget changed before send: "+budget_reason); return; }
    if(!RecordSignal(a.signal_bar)) { Print("Cannot persist signal: entry blocked"); return; }
    bool sent=OrderSend(req,result);
    PrintFormat("ICT entry send=%d retcode=%u order=%I64u deal=%I64u comment=%s",sent,result.retcode,result.order,result.deal,result.comment);

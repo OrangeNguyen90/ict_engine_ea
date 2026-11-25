@@ -59,21 +59,22 @@ void ICTRenderDashboard(const string prefix,const SICTDecision &d,const string s
                         const ENUM_BASE_CORNER corner,const int margin_x,const int margin_y,
                         const int requested_width,const int font_size,
                         const int requested_height=360,const bool show_market=true,
-                        const bool show_ict=true,const bool show_plan=true)
+                        const bool show_ict=true,const bool show_plan=true,const string research_advisory="")
   {
    string title="QUYẾT ĐỊNH ICT | "+_Symbol;
    string status=ICTDashboardPriority(d)+StringFormat(" | MUA %d | BÁN %d",d.buy_score,d.sell_score);
    color status_ink=(d.priority==ICT_PRIORITY_BUY ? C'105,218,154' :
                      (d.priority==ICT_PRIORITY_SELL ? C'247,135,140' : C'250,201,91'));
-   string body="[TRẠNG THÁI]\n";
+   string body="[BỐI CẢNH ĐA KHUNG]\nTháng / Tuần / Ngày: "+ICTDashboardBias(d.monthly_bias)+" / "+
+      ICTDashboardBias(d.weekly_bias)+" / "+ICTDashboardBias(d.daily_bias)+
+      "\nHTF / Cấu trúc: "+ICTDashboardBias(d.higher_bias)+" / "+ICTDashboardBias(d.structure_bias)+"\n";
+   body+=research_advisory+"[TRẠNG THÁI]\n";
    body+=(d.priority==ICT_PRIORITY_WAIT ? "Chưa có ưu tiên hành động" :
            (d.strong_signal ? "Ưu tiên mạnh" : "Ưu tiên trung bình"))+" | "+
            (d.entry_confirmed ? "Đã xác nhận điểm vào (tham khảo)" : "Chưa xác nhận điểm vào")+"\n";
    body+="Xu hướng: "+ICTDashboardBias(d.higher_bias)+" | Trạng thái: "+ICTDashboardState(d.state)+"\n";
    if(show_market) {
    body+="[THỊ TRƯỜNG]\n";
-   body+="Tháng / Tuần / Ngày: "+ICTDashboardBias(d.monthly_bias)+" / "+ICTDashboardBias(d.weekly_bias)+" / "+ICTDashboardBias(d.daily_bias)+"\n";
-   body+="HTF / Cấu trúc: "+ICTDashboardBias(d.higher_bias)+" / "+ICTDashboardBias(d.structure_bias)+"\n";
    body+="Vùng giá: "+ICTDashboardPrice(d.dealing_low)+" - "+ICTDashboardPrice(d.dealing_high)+
           " | Cân bằng "+ICTDashboardPrice(d.equilibrium)+" | "+ICTDashboardText(d.price_location)+"\n";
    body+="Phiên: "+ICTDashboardText(session)+" (giờ New York; chuyển đổi từ UTC)\n";

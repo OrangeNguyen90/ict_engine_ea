@@ -5,6 +5,7 @@
 #include "LiquidityDetector.mqh"
 #include "FVGDetector.mqh"
 #include "RiskCalculator.mqh"
+#include "ICTPositionRisk.mqh"
 #include "ProtectionPersistence.mqh"
 #include "SMTDivergenceDetector.mqh"
 #include "ICTConfluenceScore.mqh"
@@ -46,7 +47,9 @@ struct SICTDecisionConfig
    double commission_per_lot;
    double cost_buffer_per_lot;
    double slippage_points;
-   double daily_loss_limit_percent; // 0 disables the optional account-wide gate.
+   double daily_loss_limit_percent; // Required: >0 and <=6%, per user's account policy.
+   bool daily_risk_budget_enabled;
+   double portfolio_risk_limit_percent; // 0 disables the aggregate new-entry gate.
    int max_quote_age_seconds;
   };
 
@@ -252,28 +255,8 @@ bool ICTDailyLossAllowed(const double reference,const double limit_percent,
                          double &net)
   {
    net=0.0;
-   if(limit_percent<=0.0) return true;
-   MqlDateTime day;
-   TimeToStruct(TimeTradeServer(),day);
-   day.hour=0; day.min=0; day.sec=0;
-   datetime start=StructToTime(day);
-   if(!HistorySelect(start,TimeTradeServer())) return false;
-   for(int i=0;i<HistoryDealsTotal();i++)
-     {
-      ulong ticket=HistoryDealGetTicket(i);
-      if(ticket==0) return false;
-      ENUM_DEAL_TYPE kind=(ENUM_DEAL_TYPE)HistoryDealGetInteger(ticket,DEAL_TYPE);
-      if(kind!=DEAL_TYPE_BUY && kind!=DEAL_TYPE_SELL) continue;
-      net+=HistoryDealGetDouble(ticket,DEAL_PROFIT)+
-           HistoryDealGetDouble(ticket,DEAL_SWAP)+
-           HistoryDealGetDouble(ticket,DEAL_COMMISSION)+
-           HistoryDealGetDouble(ticket,DEAL_FEE);
-     }
-   for(int i=PositionsTotal()-1;i>=0;i--)
-     {
-      if(PositionGetTicket(i)==0) return false;
-      net+=PositionGetDouble(POSITION_PROFIT)+PositionGetDouble(POSITION_SWAP);
-     }
+   if(!MathIsValidNumber(limit_percent) || limit_percent<=0.0 || limit_percent>6.0) return false;
+   if(!ICTPositionCapitalValid(reference) || !ICTReadAccountDayNet(net)) return false;
    return net>-(reference*limit_percent/100.0);
   }
 
@@ -342,9 +325,12 @@ bool ICTAnalyzeDecisionCore(const string symbol,const SICTDecisionConfig &cfg,
       cfg.displacement_body_atr<=0.0 || cfg.displacement_body_fraction<=0.0 ||
       cfg.displacement_body_fraction>1.0 || cfg.min_gap_atr<=0.0 ||
       cfg.min_rr<2.0 || cfg.max_spread_points<=0.0 ||
-      cfg.max_quote_age_seconds<1 || cfg.daily_loss_limit_percent<0.0 ||
+      cfg.max_quote_age_seconds<1 || !MathIsValidNumber(cfg.daily_loss_limit_percent) ||
+      cfg.daily_loss_limit_percent<=0.0 || cfg.daily_loss_limit_percent>6.0 ||
+      !MathIsValidNumber(cfg.portfolio_risk_limit_percent) || cfg.portfolio_risk_limit_percent<0.0 ||
+      cfg.portfolio_risk_limit_percent>100.0 ||
       cfg.risk_percent<=0.0 ||
-      cfg.risk_percent>cfg.max_risk_percent || cfg.max_risk_percent>2.0)
+      cfg.risk_percent>cfg.max_risk_percent || cfg.max_risk_percent>3.0)
      { d.reason="Invalid configuration"; return false; }
    if(d.as_of<=0 || !ICTBarsValid(symbol,cfg.trigger_tf,12) ||
       !ICTBarsValid(symbol,cfg.setup_tf,cfg.lookback) ||
@@ -473,6 +459,7 @@ bool ICTAnalyzeDecisionCore(const string symbol,const SICTDecisionConfig &cfg,
      { d.state=ICT_RISK_BLOCKED; d.reason="Protection offline, unhealthy or locked"; return true; }
    if((quote.ask-quote.bid)/point>cfg.max_spread_points)
      { d.state=ICT_RISK_BLOCKED; d.reason="Spread exceeds limit"; return true; }
+   reference=ICTConservativeRiskCapital(reference,AccountInfoDouble(ACCOUNT_BALANCE),AccountInfoDouble(ACCOUNT_EQUITY));
    if(!ICTDailyLossAllowed(reference,cfg.daily_loss_limit_percent,d.daily_net))
      { d.state=ICT_RISK_BLOCKED;
        d.reason="Daily loss limit or account history unavailable"; return true; }
@@ -482,6 +469,9 @@ bool ICTAnalyzeDecisionCore(const string symbol,const SICTDecisionConfig &cfg,
                      cfg.commission_per_lot,cfg.cost_buffer_per_lot,
                      cfg.slippage_points,cfg.max_quote_age_seconds,d.risk))
      { d.state=ICT_RISK_BLOCKED; d.reason="Risk gate: "+d.risk.reason; return true; }
+   if(!ICTLiveEntryBudgetAllowed(reference,d.risk.risk_money,cfg.commission_per_lot+cfg.cost_buffer_per_lot,
+      cfg.portfolio_risk_limit_percent,cfg.daily_loss_limit_percent,d.reason,cfg.daily_risk_budget_enabled))
+     { d.state=ICT_RISK_BLOCKED; d.risk.valid=false; return true; }
    d.score+=5;
    d.state=ICT_ENTRY_READY;
    d.reason="Confirmed sweep, MSS, displacement, entry-zone retest, DOL and risk gates";
@@ -858,16 +848,20 @@ bool ICTAnalyzeRangeDecision(const string symbol,const SICTDecisionConfig &cfg,
       block="Live exit quote already reached or crossed the scenario target";
    else if(point<=0 || (quote.ask-quote.bid)/point>cfg.max_spread_points)
       block="Spread or symbol point invalid";
-   else if(cfg.min_rr<2 || cfg.risk_percent<=0 || cfg.risk_percent>cfg.max_risk_percent || cfg.max_risk_percent>2)
-      block="Invalid risk configuration: RR >=2 and maximum risk <=2% required";
+   else if(cfg.min_rr<2 || cfg.risk_percent<=0 || cfg.risk_percent>cfg.max_risk_percent || cfg.max_risk_percent>3)
+      block="Invalid risk configuration: RR >=2 and maximum risk <=3% required";
    else if(TerminalInfoInteger(TERMINAL_CONNECTED)==0 || !ICTProtectionReady(reference))
       block="Protection offline, unhealthy, disabled or locked";
-   else if(!ICTDailyLossAllowed(reference,cfg.daily_loss_limit_percent,d.daily_net))
+   else if(!ICTDailyLossAllowed(ICTConservativeRiskCapital(reference,AccountInfoDouble(ACCOUNT_BALANCE),
+      AccountInfoDouble(ACCOUNT_EQUITY)),cfg.daily_loss_limit_percent,d.daily_net))
       block="Daily loss gate or deal history unavailable";
-   else if(!CalculateRisk(symbol,s.direction>0 ? RM_BUY : RM_SELL,s.entry,s.stop,s.tp1,reference,
+   else if(!CalculateRisk(symbol,s.direction>0 ? RM_BUY : RM_SELL,s.entry,s.stop,s.tp1,
+                           ICTConservativeRiskCapital(reference,AccountInfoDouble(ACCOUNT_BALANCE),AccountInfoDouble(ACCOUNT_EQUITY)),
                            cfg.risk_percent,cfg.max_risk_percent,cfg.min_rr,cfg.commission_per_lot,
                            cfg.cost_buffer_per_lot,cfg.slippage_points,cfg.max_quote_age_seconds,d.risk))
       block="Risk gate: "+d.risk.reason;
+   else if(!ICTLiveEntryBudgetAllowed(reference,d.risk.risk_money,cfg.commission_per_lot+cfg.cost_buffer_per_lot,
+      cfg.portfolio_risk_limit_percent,cfg.daily_loss_limit_percent,block,cfg.daily_risk_budget_enabled)) d.risk.valid=false;
    if(block!="")
      {
       d.state=ICT_RISK_BLOCKED; d.reason=block; d.hard_filter_reason=block;

@@ -1,5 +1,5 @@
 ﻿#property copyright "MT5 Smart Risk Manager Pro"
-#property version "1.03"
+#property version "1.11"
 #property description "Closed-bar ICT decision support. Never places, modifies or closes trades."
 
 #include "../Include/ICTDecisionEngine.mqh"
@@ -9,6 +9,10 @@
 #include "../Include/ICTRangeBridge.mqh"
 #include "../Include/ICTRangeRenderer.mqh"
 #include "../Include/ICTPositionRiskRenderer.mqh"
+#include "../Include/ICTChartObjects.mqh"
+#include "../Include/ICTMLPrediction.mqh"
+#include "../Include/ICTStatisticalDashboard.mqh"
+#include "../Include/ICTSweepFocusRenderer.mqh"
 #ifdef ICT_SMART_ENGINE
 #include "../Include/ICTDecisionBridge.mqh"
 #include "../Include/ICTSmartDashboard.mqh"
@@ -21,7 +25,9 @@
 #include "../Include/ICTUnifiedDecisionAdapter.mqh"
 #include "../Include/ICTSignalHistory.mqh"
 #endif
+#include "../Include/ICTAnalyticalDashboard.mqh"
 
+input group "ICT analysis and dashboard"
 input string Main_Symbol=""; // Empty uses chart symbol; mismatches are rejected.
 input ENUM_TIMEFRAMES Higher_Timeframe=PERIOD_H4;
 input ENUM_TIMEFRAMES Structure_Timeframe=PERIOD_H1;
@@ -46,20 +52,22 @@ input double Displacement_Body_ATR=1.0;
 input double Displacement_Body_Fraction=0.60;
 input double Minimum_FVG_ATR=0.05;
 input double Maximum_Spread_Points=50.0;
-input double Risk_Per_Trade=1.0;
-input double Maximum_Risk_Per_Trade=2.0;
+input double Risk_Per_Trade=0.25;
+input double Maximum_Risk_Per_Trade=3.0; // User ceiling; target may be lower.
 input double Minimum_RR=2.0;
 input double Commission_Round_Turn_Per_Lot=0.0;
 input double Unspecified_Cost_Buffer_Per_Lot=10.0;
 input double Estimated_Slippage_Points=2.0;
-input double Daily_Loss_Limit_Percent=0.0; // Disabled by default.
-input int Maximum_Quote_Age_Seconds=60;
+input double Daily_Loss_Limit_Percent=6.0; // User ceiling, including the proposed SL budget.
+input bool Daily_Risk_Budget_Enable=true; // Count original SL risk of today's entries; wins do not refund it.
+input double Portfolio_Risk_Limit_Percent=3.0; // Recommended simultaneous exposure cap; includes pending/new SL.
+input int Maximum_Quote_Age_Seconds=10;
 input bool Show_Chart_Levels=true;
 input bool Show_Dashboard=true;
 input ENUM_BASE_CORNER Dashboard_Corner=CORNER_LEFT_UPPER;
 input int Dashboard_X=12;
-input int Dashboard_Y=80; // Keep header below the one-click trading controls.
-input int Dashboard_Width=380;
+input int Dashboard_Y=60; // Raise both dashboards by 20 pixels; still adjustable in Inputs.
+input int Dashboard_Width=320;
 input int Dashboard_Height=420;
 input int Dashboard_Font_Size=11;
 input ENUM_TIMEFRAMES Chart_Zone_Timeframe=PERIOD_CURRENT; // CURRENT follows the chart; choose an analyzed timeframe to view its zones.
@@ -107,19 +115,28 @@ input int Tester_Broker_UTC_Offset_Minutes=9999; // Configure per replay period;
 
 input group "Live position risk / reward (read-only)"
 input bool Show_Position_Risk=true;
-input bool Position_Risk_All_Symbols=false; // false: positions on this chart symbol, including manual trades.
-input ENUM_ICT_POSITION_CAPITAL Position_Risk_Capital=ICT_POSITION_BALANCE;
+input bool Position_Risk_All_Symbols=true; // Account risk includes manual trades, other EAs and pending orders.
+input ENUM_ICT_POSITION_CAPITAL Position_Risk_Capital=ICT_POSITION_CONSERVATIVE;
 input ENUM_BASE_CORNER Position_Risk_Corner=CORNER_RIGHT_UPPER;
 input int Position_Risk_X=12;
-input int Position_Risk_Y=80;
-input int Position_Risk_Width=380;
+input int Position_Risk_Y=60;
+input int Position_Risk_Width=420;
 input int Position_Risk_Height=420;
+
+input group "ML / DL independent research advisory (read-only)"
+input bool ML_Prediction_Enable=false;
+input string ML_Prediction_File="ICTML_prediction.txt"; // Relative MQL5/Files path only.
+input bool ML_Prediction_Common_Files=false;
+input string ML_Prediction_Expected_Model_ID=""; // Required exact 64-character frozen model ID when enabled.
+input ENUM_TIMEFRAMES ML_Prediction_Timeframe=PERIOD_M15;
+input bool ML_Prediction_Broker_Timezone_Verified=false; // Confirm this offset for the current broker period.
+input int ML_Prediction_Broker_UTC_Offset_Minutes=0;
 
 SICTDecisionConfig g_config;
 SICTConfluenceConfig g_scoring;
 CICTAlertManager g_alerts;
 SICTDecision g_decision;
-string g_prefix="SRMP_ICTD_";
+string g_prefix=ICT_DECISION_OBJECT_PREFIX;
 string g_session="";
 SICTRangeConfig g_range_config;
 SICTRangeSnapshot g_range_snapshot;
@@ -130,6 +147,8 @@ SICTPositionRiskSnapshot g_position_risk;
 ulong g_position_risk_last_ms=0;
 int g_position_risk_page=0,g_position_risk_x=-1,g_position_risk_y=-1;
 bool g_position_risk_hidden=false;
+SICTMLPrediction g_ml_prediction;
+ulong g_analysis_last_ms=0;
 #ifdef ICT_SMART_ENGINE
 SICTTimeframes g_timeframes;
 SICTUnifiedConfig g_unified_config;
@@ -138,7 +157,51 @@ CICTUnifiedAnalysis g_unified_engine;
 CICTSignalHistory g_signal_history;
 datetime g_smt_selection_bar=0;
 datetime g_smt_last_attempt=0;
+#endif
 
+void ICTRefreshMLPrediction()
+  {
+   if(!ML_Prediction_Enable)
+     { ICTMLReject(g_ml_prediction,"DISABLED","Independent ML/DL research display is disabled"); return; }
+   if(!ICTMLHex(ML_Prediction_Expected_Model_ID,64) || !ICTMLSafeFile(ML_Prediction_File) ||
+      ICTMLTimeframe(ML_Prediction_Timeframe)=="" || ML_Prediction_Broker_UTC_Offset_Minutes < -840 ||
+      ML_Prediction_Broker_UTC_Offset_Minutes > 840)
+     { ICTMLReject(g_ml_prediction,"INVALID_CONFIG","Configure a pinned model, safe relative file, supported timeframe and broker UTC offset (-840..840)"); return; }
+   if(!ML_Prediction_Broker_Timezone_Verified)
+     { ICTMLReject(g_ml_prediction,"TIMEZONE_UNVERIFIED","Confirm the broker UTC offset before reading predictions"); return; }
+   int period=ICTMLPeriodSeconds(ICTMLTimeframe(ML_Prediction_Timeframe));
+   datetime closed_open=iTime(_Symbol,ML_Prediction_Timeframe,1);
+   if(closed_open<=0 || period<=0)
+     { ICTMLReject(g_ml_prediction,"MISSING_BARS","Latest closed prediction candle is unavailable"); return; }
+   datetime expected_utc=(datetime)((long)closed_open+period-(long)ML_Prediction_Broker_UTC_Offset_Minutes*60);
+   ICTMLReadPrediction(ML_Prediction_File,ML_Prediction_Common_Files,ML_Prediction_Expected_Model_ID,
+      _Symbol,ICTMLTimeframe(ML_Prediction_Timeframe),expected_utc,TimeGMT(),g_ml_prediction);
+  }
+
+void ICTMLRenderChart(const string name,const SICTMLPrediction &prediction,const bool enabled,
+                                 const ENUM_BASE_CORNER corner,const int x,const int y,const int panel_height)
+   {
+    if(!enabled)
+       { ObjectDelete(0,name); return; }
+    if(ObjectFind(0,name)<0 && !ObjectCreate(0,name,OBJ_LABEL,0,0,0)) return;
+    bool bottom=corner==CORNER_LEFT_LOWER || corner==CORNER_RIGHT_LOWER;
+    int label_y=(bottom ? y+panel_height+8 : (int)MathMax(4,y-26));
+    color ink=(!prediction.valid ? clrDarkOrange : prediction.direction>0 ? clrForestGreen :
+         prediction.direction<0 ? clrFireBrick : clrSlateGray);
+    ObjectSetInteger(0,name,OBJPROP_CORNER,corner);
+    ObjectSetInteger(0,name,OBJPROP_XDISTANCE,(int)MathMax(4,x+8));
+    ObjectSetInteger(0,name,OBJPROP_YDISTANCE,label_y);
+    ObjectSetInteger(0,name,OBJPROP_COLOR,ink);
+    ObjectSetInteger(0,name,OBJPROP_FONTSIZE,10);
+    ObjectSetInteger(0,name,OBJPROP_BACK,false);
+    ObjectSetInteger(0,name,OBJPROP_SELECTABLE,false);
+    ObjectSetInteger(0,name,OBJPROP_HIDDEN,true);
+    ObjectSetString(0,name,OBJPROP_FONT,"Segoe UI Semibold");
+    ObjectSetString(0,name,OBJPROP_TEXT,ICTMLChartText(prediction));
+    ObjectSetString(0,name,OBJPROP_TOOLTIP,ICTMLDashboardBody(prediction));
+   }
+
+#ifdef ICT_SMART_ENGINE
 void ICTUpdateSMTComparisons()
   {
    datetime closed_bar=iTime(_Symbol,g_config.smt_tf,1);
@@ -218,7 +281,8 @@ void ICTDrawPositionRisk()
    if(!Show_Position_Risk) { ObjectsDeleteAll(0,g_prefix+"position_risk_"); return; }
    ICTRenderPositionRiskPanel(g_prefix+"position_risk_",g_position_risk,
       Position_Risk_Corner,Position_Risk_X,Position_Risk_Y,Position_Risk_Width,Position_Risk_Height,
-      Dashboard_Font_Size,g_position_risk_page,g_position_risk_x,g_position_risk_y,g_position_risk_hidden);
+      Dashboard_Font_Size,g_position_risk_page,g_position_risk_x,g_position_risk_y,g_position_risk_hidden,
+      Portfolio_Risk_Limit_Percent,Daily_Loss_Limit_Percent,Maximum_Risk_Per_Trade,Daily_Risk_Budget_Enable);
   }
 
 void ICTRefreshPositionRisk(const bool force=false)
@@ -230,6 +294,17 @@ void ICTRefreshPositionRisk(const bool force=false)
    int previous=g_position_risk.totals.count;
    ICTReadPositionRiskSnapshot(Position_Risk_All_Symbols ? "" : _Symbol,Position_Risk_Capital,
       Commission_Round_Turn_Per_Lot+Unspecified_Cost_Buffer_Per_Lot,g_position_risk);
+   string fields[]={"HB","STATE","HEALTH","AUTO"}; bool available=true;
+   for(int i=0;i<ArraySize(fields);i++)
+      if(!GlobalVariableCheck(SRMPGlobalKey(fields[i])) ||
+         !MathIsValidNumber(GlobalVariableGet(SRMPGlobalKey(fields[i])))) available=false;
+   datetime heartbeat=(datetime)GlobalVariableGet(SRMPGlobalKey("HB")),local=TimeLocal();
+   g_position_risk.protection_online=available && heartbeat>0 && heartbeat<=local && local-heartbeat<=3;
+   g_position_risk.protection_state=(int)GlobalVariableGet(SRMPGlobalKey("STATE"));
+   g_position_risk.protection_armed=available && GlobalVariableGet(SRMPGlobalKey("AUTO"))>0.5;
+   g_position_risk.protection_healthy=available && GlobalVariableGet(SRMPGlobalKey("HEALTH"))==0.0 &&
+      TerminalInfoInteger(TERMINAL_TRADE_ALLOWED)!=0 && MQLInfoInteger(MQL_TRADE_ALLOWED)!=0 &&
+      AccountInfoInteger(ACCOUNT_TRADE_ALLOWED)!=0 && AccountInfoInteger(ACCOUNT_TRADE_EXPERT)!=0;
    if(g_position_risk.totals.count!=previous) g_position_risk_page=0;
    ICTDrawPositionRisk();
    ICTChartLayoutApply(g_prefix+"ui_",g_prefix+"position_risk_");
@@ -238,7 +313,35 @@ void ICTRefreshPositionRisk(const bool force=false)
 
 void ICTDrawCurrentPanel()
   {
-   if(!Show_Dashboard) return;
+   ICTLiquidityObserve(g_range_snapshot,g_range_config,Enable_IRL_ERL && Show_Liquidity);
+#ifdef ICT_SMART_ENGINE
+   ICTAnalyticalObserveUnified(g_unified_snapshot,g_range_snapshot,g_unified_config.ob.left,g_unified_config.ob.right,g_unified_config.structure_lookback);
+#else
+   ICTAnalyticalObserveLegacy(g_decision,g_config,g_range_snapshot,Enable_IRL_ERL);
+#endif
+   ICTAnalyticalRender(g_prefix+"analysis_");
+   bool hidden=g_ict_dashboard_hidden;
+#ifndef ICT_SMART_ENGINE
+   if(Enable_IRL_ERL) hidden=g_range_panel_hidden;
+#endif
+   bool dashboard_visible=Show_Dashboard && !hidden;
+   bool statistics_badge_visible=(ML_Liquidity_Enable ? ML_Liquidity_Show_On_Chart : dashboard_visible);
+   ENUM_BASE_CORNER statistics_corner=Dashboard_Corner;
+   int statistics_x=Dashboard_X,statistics_y=Dashboard_Y,statistics_height=Dashboard_Height;
+   if(ML_Liquidity_Enable && !dashboard_visible)
+     {
+      statistics_corner=CORNER_LEFT_UPPER; statistics_x=12; statistics_y=28; statistics_height=0;
+     }
+   ICTStatRenderBadge(g_prefix+"ml_statistics",statistics_badge_visible,
+      statistics_corner,statistics_x,statistics_y,statistics_height);
+   // The local badge has priority; external forecasts remain visible in the
+   // first dashboard section and tooltip when local statistics are enabled.
+   ICTMLRenderChart(g_prefix+"ml_prediction",g_ml_prediction,
+      ML_Prediction_Enable && !ML_Statistics_Enable && !ML_Liquidity_Enable && Show_Dashboard && !hidden,
+      Dashboard_Corner,Dashboard_X,Dashboard_Y,Dashboard_Height);
+   if(!Show_Dashboard) { ObjectsDeleteAll(0,g_prefix+"ui_"); return; }
+   string research=ICTAnalyticalDashboardBody()+ICTLiquidityDashboardBody()+ICTSweepFocusDashboardBody()+ICTStatDashboardBody()+
+      (ML_Prediction_Enable ? ICTMLDashboardBody(g_ml_prediction) : "");
 #ifdef ICT_SMART_ENGINE
    string decision=ICTDashboardSignalState(g_unified_snapshot.signal.state);
    string plan=(g_decision.entry>0 && g_decision.stop>0 && g_decision.target>0 ?
@@ -247,15 +350,16 @@ void ICTDrawCurrentPanel()
       (g_decision.entry_confirmed ? " | RỦI RO ĐẠT" : " | CHƯA ĐƯỢC DUYỆT") : "Chưa có giá vào / SL / TP do kế hoạch chưa đầy đủ");
    ICTRenderUnifiedDashboard(g_prefix+"ui_",g_unified_snapshot,decision,plan,g_decision.reason,
       Dashboard_Corner,Dashboard_X,Dashboard_Y,Dashboard_Width,Dashboard_Height,Dashboard_Font_Size,
-      g_ict_dashboard_page,g_ict_dashboard_x,g_ict_dashboard_y,g_ict_dashboard_hidden);
+      g_ict_dashboard_page,g_ict_dashboard_x,g_ict_dashboard_y,g_ict_dashboard_hidden,
+      research);
 #else
    if(Enable_IRL_ERL)
       ICTRenderRangeDashboard(g_prefix+"ui_",g_range_snapshot,Dashboard_Corner,
          Dashboard_X,Dashboard_Y,Dashboard_Width,Dashboard_Height,Dashboard_Font_Size,
-         Dashboard_Market_Group,Dashboard_ICT_Group,Dashboard_Plan_Group);
+         Dashboard_Market_Group,Dashboard_ICT_Group,Dashboard_Plan_Group,research);
    else ICTRenderDashboard(g_prefix+"ui_",g_decision,g_session,Dashboard_Corner,
          Dashboard_X,Dashboard_Y,Dashboard_Width,Dashboard_Font_Size,
-         Dashboard_Height,Dashboard_Market_Group,Dashboard_ICT_Group,Dashboard_Plan_Group);
+         Dashboard_Height,Dashboard_Market_Group,Dashboard_ICT_Group,Dashboard_Plan_Group,research);
 #endif
   }
 
@@ -304,15 +408,19 @@ void ICTRefreshUnified()
    bool range_backdrop=Enable_IRL_ERL && Show_Liquidity && Range_Show_Range &&
                        g_range_snapshot.valid && g_range_snapshot.range.valid &&
                        g_range_snapshot.range.timeframe==display_tf;
+   ICTRenderSweepFocus(g_prefix+"sweepfocus_",g_range_snapshot,
+      Enable_IRL_ERL && Show_Liquidity && EnableLiquiditySweepDetection,display_tf,
+      g_range_config.left,g_range_config.right,g_range_config.displacement_atr,g_range_config.displacement_fraction);
    ICTRenderUnifiedOverlays(g_prefix+"unified_draw_",g_unified_snapshot,Show_SMT,Show_Order_Blocks,
       Show_FVG,EnableBPRDetection && ShowBPRZones,Show_Premium_Discount && !range_backdrop,
       Show_Structure,Show_Liquidity && !range_backdrop);
    if(Enable_IRL_ERL)
      {
       ICTRenderRange(g_prefix+"range_",g_range_snapshot,Show_Liquidity && Range_Show_Range,Show_Liquidity && Range_Show_IRL,Show_Liquidity && Range_Show_ERL,
-                     false,Range_Show_Rotation,true); // Final targets belong exclusively to committed SignalResult.
+                     false,Range_Show_Rotation,true,24,g_sweep_focus_compact); // Final targets belong exclusively to committed SignalResult.
       ICTRenderSweepSequence(g_prefix+"sweepseq_",g_range_snapshot,Sweep_Maximum_Events_To_Draw,
-         Show_Liquidity && ShowSweep1,Show_Liquidity && ShowSweep2,Show_Liquidity && ShowSweep3Plus,EnableMultiSweepAnalysis,EnableSweepConnectionLine);
+         Show_Liquidity && ShowSweep1,Show_Liquidity && ShowSweep2,Show_Liquidity && ShowSweep3Plus,
+         EnableMultiSweepAnalysis,EnableSweepConnectionLine,g_sweep_focus_compact);
      }
    g_signal_history.RenderPlan(g_prefix+"signal_plan_",g_unified_snapshot.signal,ready);
    RMContextLine(g_prefix+"ENTRY",ready ? g_decision.entry : 0,clrDodgerBlue,"Advisory Entry; not an order");
@@ -329,6 +437,7 @@ void ICTRefreshUnified()
 
 void ICTRefresh()
   {
+   ICTRefreshMLPrediction();
 #ifdef ICT_SMART_ENGINE
    ICTRefreshUnified();
 #else
@@ -365,17 +474,25 @@ void ICTRefresh()
          g_last_range_reason=(int)g_range_snapshot.reason_code; g_last_range_valid=g_range_snapshot.valid;
         }
       if(!ICTPublishRange(_Symbol,g_range_snapshot)) Print("IRL/ERL publication failed; indicator must withhold stale data");
+      ICTRenderSweepFocus(g_prefix+"sweepfocus_",g_range_snapshot,
+         Show_Liquidity && EnableLiquiditySweepDetection,display_tf,
+         g_range_config.left,g_range_config.right,g_range_config.displacement_atr,g_range_config.displacement_fraction);
 #ifdef ICT_SMART_ENGINE
       ICTRenderRange(g_prefix+"range_",g_range_snapshot,Range_Show_Range,Range_Show_IRL,
-                      Range_Show_ERL,Range_Show_Targets,Range_Show_Rotation,true);
+                      Range_Show_ERL,Range_Show_Targets,Range_Show_Rotation,true,24,g_sweep_focus_compact);
       ICTRenderSweepSequence(g_prefix+"sweepseq_",g_range_snapshot,Sweep_Maximum_Events_To_Draw,
-                             ShowSweep1,ShowSweep2,ShowSweep3Plus,EnableMultiSweepAnalysis,EnableSweepConnectionLine);
+                             ShowSweep1,ShowSweep2,ShowSweep3Plus,EnableMultiSweepAnalysis,EnableSweepConnectionLine,g_sweep_focus_compact);
 #else
-      ICTRenderRange(g_prefix+"range_",g_range_snapshot,Range_Show_Range,Range_Show_IRL,
-                      Range_Show_ERL,Range_Show_Targets,Range_Show_Rotation);
+      ICTRenderRange(g_prefix+"range_",g_range_snapshot,Show_Liquidity && Range_Show_Range,Show_Liquidity && Range_Show_IRL,
+                      Show_Liquidity && Range_Show_ERL,Range_Show_Targets,Range_Show_Rotation,false,24,g_sweep_focus_compact);
 #endif
      }
-   else ICTAnalyzeDecision(_Symbol,g_config,g_scoring,g_decision);
+   else
+     {
+      ICTAnalyzeDecision(_Symbol,g_config,g_scoring,g_decision);
+      ICTRenderSweepFocus(g_prefix+"sweepfocus_",g_range_snapshot,false,display_tf,
+         g_range_config.left,g_range_config.right,g_range_config.displacement_atr,g_range_config.displacement_fraction);
+     }
 #ifdef ICT_SMART_ENGINE
    SmartSLTPObserveDecision(g_decision);
    ICTPublishDecision(_Symbol,g_decision);
@@ -442,6 +559,15 @@ void ICTRefresh()
   }
 int OnInit()
   {
+   g_prefix=ICT_DECISION_OBJECT_PREFIX+IntegerToString(ChartID())+"_";
+   // Clear restored drawings even if validation below rejects initialization.
+   ICTDeleteDecisionChartObjects();
+   ICTStatInit();
+   if(ML_Prediction_Enable && (!ICTMLHex(ML_Prediction_Expected_Model_ID,64) ||
+      !ICTMLSafeFile(ML_Prediction_File) || ICTMLTimeframe(ML_Prediction_Timeframe)=="" ||
+      !ML_Prediction_Broker_Timezone_Verified || ML_Prediction_Broker_UTC_Offset_Minutes < -840 ||
+      ML_Prediction_Broker_UTC_Offset_Minutes > 840))
+      Print("ICT ML: advisory unavailable until model pin, relative file, timeframe and verified broker UTC offset (-840..840 minutes) are configured; native analysis remains active");
 #ifdef ICT_SMART_ENGINE
    int sltp_init=SmartSLTPInit();
    if(sltp_init!=INIT_SUCCEEDED) return sltp_init;
@@ -469,7 +595,6 @@ int OnInit()
    g_scoring.strong_score=Strong_Priority_Score;
    g_scoring.entry_zone_mode=Entry_Zone_Mode;
    g_scoring.tester_broker_utc_offset_minutes=Tester_Broker_UTC_Offset_Minutes;
-   g_prefix="SRMP_ICTD_"+IntegerToString(ChartID())+"_";
    g_scoring.htf=Weight_HTF; g_scoring.sweep=Weight_Sweep; g_scoring.mss=Weight_MSS;
    g_scoring.displacement=Weight_Displacement; g_scoring.fvg=Weight_FVG;
    g_scoring.ob=Weight_OB; g_scoring.premium_discount=Weight_Premium_Discount;
@@ -496,7 +621,8 @@ int OnInit()
      }
    if(Show_Position_Risk && (Position_Risk_X<0 || Position_Risk_Y<0 ||
       Position_Risk_Width<300 || Position_Risk_Height<180 ||
-      (Position_Risk_Capital!=ICT_POSITION_BALANCE && Position_Risk_Capital!=ICT_POSITION_EQUITY) ||
+      (Position_Risk_Capital!=ICT_POSITION_BALANCE && Position_Risk_Capital!=ICT_POSITION_EQUITY &&
+       Position_Risk_Capital!=ICT_POSITION_CONSERVATIVE) ||
       !MathIsValidNumber(Commission_Round_Turn_Per_Lot) || Commission_Round_Turn_Per_Lot<0.0 ||
       !MathIsValidNumber(Unspecified_Cost_Buffer_Per_Lot) || Unspecified_Cost_Buffer_Per_Lot<0.0 ||
       !MathIsValidNumber(Commission_Round_Turn_Per_Lot+Unspecified_Cost_Buffer_Per_Lot)))
@@ -537,26 +663,39 @@ int OnInit()
    g_config.cost_buffer_per_lot=Unspecified_Cost_Buffer_Per_Lot;
    g_config.slippage_points=Estimated_Slippage_Points;
    g_config.daily_loss_limit_percent=Daily_Loss_Limit_Percent;
+   g_config.daily_risk_budget_enabled=Daily_Risk_Budget_Enable;
+   g_config.portfolio_risk_limit_percent=Portfolio_Risk_Limit_Percent;
    g_config.max_quote_age_seconds=Maximum_Quote_Age_Seconds;
    if(Structure_Lookback<40 || Swing_Strength<1 || Maximum_Setup_Age_Bars<1 ||
       Minimum_RR<2.0 || Maximum_Spread_Points<=0.0 ||
       Risk_Per_Trade<=0.0 || Risk_Per_Trade>Maximum_Risk_Per_Trade ||
-      Maximum_Risk_Per_Trade>2.0 || Daily_Loss_Limit_Percent<0.0)
+      Maximum_Risk_Per_Trade>3.0 || !MathIsValidNumber(Daily_Loss_Limit_Percent) ||
+      Daily_Loss_Limit_Percent<=0.0 || Daily_Loss_Limit_Percent>6.0 ||
+      !MathIsValidNumber(Portfolio_Risk_Limit_Percent) || Portfolio_Risk_Limit_Percent<0.0 ||
+      Portfolio_Risk_Limit_Percent>100.0)
       return INIT_PARAMETERS_INCORRECT;
 #ifdef ICT_SMART_ENGINE
    if(!g_signal_history.Init(_Symbol,g_timeframes,SignalHistoryClosedBars))
       Print("ICT: signal history unavailable; new confirmations withheld until journal is readable");
 #endif
-   if(!EventSetTimer(5)) return INIT_FAILED;
-   // Remove annotation backgrounds left by versions that framed chart labels.
-   ObjectsDeleteAll(0,g_prefix+"label_bg_");
+   if(!EventSetTimer(ML_Statistics_Enable || ML_Liquidity_Enable ? 1 : 5)) return INIT_FAILED;
    ICTRefreshPositionRisk(true);
    ICTRefresh();
+   g_analysis_last_ms=GetTickCount64();
    return INIT_SUCCEEDED;
   }
 
 void OnTimer()
   {
+   bool statistics_changed=ICTStatPump();
+   if(ICTLiquidityPump()) statistics_changed=true;
+   ulong now=GetTickCount64();
+   if(g_analysis_last_ms>0 && now-g_analysis_last_ms<5000)
+     {
+      if(statistics_changed) { ICTDrawCurrentPanel(); ICTChartLayoutApply(g_prefix+"ui_",g_prefix+"position_risk_"); ChartRedraw(); }
+      return;
+     }
+   g_analysis_last_ms=now;
    ICTRefreshPositionRisk();
    ICTRefresh();
 #ifdef ICT_SMART_ENGINE
@@ -595,6 +734,9 @@ void OnChartEvent(const int id,const long &lparam,const double &dparam,const str
 void OnDeinit(const int reason)
   {
    EventKillTimer();
+   // Remove the UI before file exports can consume the deinit time limit.
+   ICTDeleteDecisionChartObjects();
+   ICTStatDeinit();
 #ifdef ICT_SMART_ENGINE
    SmartSLTPDeinit();
 #endif
@@ -605,6 +747,4 @@ void OnDeinit(const int reason)
    GlobalVariableSet(SRMPAdviceKey(_Symbol,"DTS"),0);
    GlobalVariableSet(SRMPAdviceKey(_Symbol,"UTS"),0);
 #endif
-   ObjectsDeleteAll(0,g_prefix);
-   ChartRedraw();
   }

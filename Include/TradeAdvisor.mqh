@@ -54,8 +54,8 @@ bool SRMPAnalyzeAdvice(const string symbol,
    advice.setup_type="PDH/PDL sweep + FVG + BOS";
    advice.entry_conditions="Closed-bar sweep, aligned BOS, unmitigated FVG, price in gap";
    advice.reasons="Data unavailable";
-   if(risk_percent<=0.0 || risk_percent>2.0 || max_risk_percent<=0.0 ||
-      max_risk_percent>2.0 || minimum_rr<2.0 || max_spread_points<=0.0)
+   if(risk_percent<=0.0 || risk_percent>3.0 || max_risk_percent<=0.0 ||
+      max_risk_percent>3.0 || minimum_rr<2.0 || max_spread_points<=0.0)
      { advice.reasons="Invalid advisory risk limits"; return false; }
    if(TerminalInfoInteger(TERMINAL_CONNECTED)==0)
      { advice.reasons="Terminal disconnected"; return false; }

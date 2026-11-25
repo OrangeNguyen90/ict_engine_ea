@@ -52,7 +52,9 @@ input int Decision_Max_Setup_Age_Bars=48;
 input double Decision_Displacement_Body_ATR=1.0;
 input double Decision_Displacement_Body_Fraction=0.60;
 input double Decision_Minimum_FVG_ATR=0.05;
-input double Decision_Daily_Loss_Limit_Percent=0.0;
+input double Decision_Daily_Loss_Limit_Percent=6.0;
+input bool Decision_Daily_Risk_Budget_Enable=true;
+input double Decision_Portfolio_Risk_Limit_Percent=3.0;
 input int Decision_Minimum_Score=65;
 input int Decision_Strong_Score=80;
 input ENUM_ICT_ZONE_MODE Decision_Entry_Zone_Mode=ICT_ZONE_FVG_OR_OB;
@@ -253,6 +255,8 @@ void AnalyzeAndPublishDecision(const SICTSnapshot &ict)
    cfg.cost_buffer_per_lot=Read("BUF");
    cfg.slippage_points=Read("SLIP");
    cfg.daily_loss_limit_percent=Decision_Daily_Loss_Limit_Percent;
+   cfg.daily_risk_budget_enabled=Decision_Daily_Risk_Budget_Enable;
+   cfg.portfolio_risk_limit_percent=Decision_Portfolio_Risk_Limit_Percent;
    cfg.max_quote_age_seconds=(int)Read("AGE");
    SICTDecision decision;
    SICTConfluenceConfig scoring;
@@ -300,7 +304,10 @@ int OnInit()
       Decision_Displacement_Body_Fraction<=0.0 ||
       Decision_Displacement_Body_Fraction>1.0 ||
       Decision_Minimum_FVG_ATR<=0.0 ||
-      Decision_Daily_Loss_Limit_Percent<0.0) return INIT_PARAMETERS_INCORRECT;
+      !MathIsValidNumber(Decision_Daily_Loss_Limit_Percent) || Decision_Daily_Loss_Limit_Percent<=0.0 ||
+      Decision_Daily_Loss_Limit_Percent>6.0 || !MathIsValidNumber(Decision_Portfolio_Risk_Limit_Percent) ||
+      Decision_Portfolio_Risk_Limit_Percent<0.0 || Decision_Portfolio_Risk_Limit_Percent>100.0)
+      return INIT_PARAMETERS_INCORRECT;
    ConfigureICT();
    SICTConfluenceConfig scoring;
    ConfigureDecisionScoring(scoring);

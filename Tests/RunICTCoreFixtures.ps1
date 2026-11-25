@@ -37,7 +37,7 @@ $modules=@(
  'SymbolCorrelationEngine.mqh','SMTSignalValidator.mqh','SMTDivergenceDetector.mqh',
  'FVGDetector.mqh','OrderBlockDetector.mqh','OrderBlockScoring.mqh',
  'ICTSweepSequence.mqh','ICTStrongOrderBlock.mqh','ICTDynamicSMT.mqh','ICTRangeTypes.mqh','ICTRangeEngine.mqh',
- 'ICTBalancedPriceRange.mqh','ICTUnifiedAnalysis.mqh','ICTUnifiedBridge.mqh','ICTPositionRisk.mqh')
+ 'ICTBalancedPriceRange.mqh','ICTUnifiedAnalysis.mqh','ICTUnifiedBridge.mqh','ICTPositionRisk.mqh','PositionPlanValidation.mqh','ICTStatisticalLearning.mqh','ICTSweepFocus.mqh','ICTAnalyticalConsensus.mqh')
 $source=''
 foreach($module in $modules) {
     $part=Get-Content -LiteralPath (Join-Path $project "Include\$module") -Raw -Encoding UTF8
@@ -69,7 +69,7 @@ $diagnosticEnd=$diagnostic.IndexOf('// The final result', $diagnosticStart)
 if($diagnosticStart -lt 0 -or $diagnosticEnd -lt 0) { throw 'SMT diagnostic function not found' }
 $source+="`n"+$diagnostic.Substring($diagnosticStart,$diagnosticEnd-$diagnosticStart)
 $source+="`n"+(Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ICTUnifiedCoreFixtures.mqh') -Raw -Encoding UTF8)
-foreach($fixture in @('ICTConfluenceLifecycleFixtures.mqh','ICTSessionLiquidityFixtures.mqh','ICTSignalJournalLiveFixtures.mqh','ICTPositionRiskFixtures.mqh')) {
+foreach($fixture in @('ICTConfluenceLifecycleFixtures.mqh','ICTSessionLiquidityFixtures.mqh','ICTSignalJournalLiveFixtures.mqh','ICTPositionRiskFixtures.mqh','ICTStatisticalLearningFixtures.mqh','ICTSweepFocusFixtures.mqh','ICTAnalyticalFixtures.mqh')) {
     $source+="`n"+(Get-Content -LiteralPath (Join-Path $PSScriptRoot $fixture) -Raw -Encoding UTF8)
 }
 $bridgeFixtures=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ICTUnifiedTests.mq5') -Raw -Encoding UTF8
@@ -87,7 +87,8 @@ $localization=Get-Content -LiteralPath (Join-Path $project 'Include\ICTDashboard
 $source+="`n"+(Get-MqlFunction $localization 'ICTDashboardText')
 $renderer=Get-Content -LiteralPath (Join-Path $project 'Include\ICTUnifiedRenderer.mqh') -Raw -Encoding UTF8
 $positionRenderer=Get-Content -LiteralPath (Join-Path $project 'Include\ICTPositionRiskRenderer.mqh') -Raw -Encoding UTF8
-foreach($name in @('ICTPositionMoney','ICTPositionMoneyPercent','ICTPositionRiskStatus','ICTPositionRiskBody')) {
+foreach($name in @('ICTPositionMoney','ICTPositionMoneyPercent','ICTPositionRiskStatus','ICTPositionRiskBody',
+   'ICTPositionCompactMoney','ICTPositionWorstIndex','ICTPositionSummaryLabel','ICTPositionSummaryValue','ICTPositionSummarySeverity')) {
     $source+="`n"+(Get-MqlFunction $positionRenderer $name)
 }
 foreach($name in @('ICTUnifiedTF','ICTUnifiedBias','ICTUnifiedStructureText','ICTDashboardSignalState',
@@ -107,6 +108,7 @@ $source=[regex]::Replace($source,"C'(\d+),(\d+),(\d+)'",{
 $source=$source -replace '\bcolor\b','int'
 $source=[regex]::Replace($source,'/\*[\s\S]*?\*/','')
 $source=[regex]::Replace($source,'(?m)//[^\r\n]*','')
+$source=[regex]::Replace($source,'(?m)[\t ]+$','')
 $constants=''
 foreach($define in [regex]::Matches($source,'(?m)^#define\s+(\w+)\s+(\d+)\s*$')) {
     $constants+="public const int $($define.Groups[1].Value)=$($define.Groups[2].Value);`n"
@@ -174,11 +176,15 @@ $source=[regex]::Replace($source,'struct\s+(\w+)\s*\{([^}]+)\}\s*;',{
     return "public class $($m.Groups[1].Value) {`n$fields}`n"
 })
 $types='(?:int|uint|long|double|bool|string|'+(($classNames | ForEach-Object {[regex]::Escape($_)}) -join '|')+')'
-# Array locals, including comma-separated dynamic declarations.
-$source=[regex]::Replace($source,"\b($types)\s+(\w+\[\](?:\s*,\s*\w+\[\])+);",{
+# Array locals, including comma-separated dynamic or fixed-size declarations.
+$source=[regex]::Replace($source,"\b($types)\s+(\w+\[[^\]]*\](?:\s*,\s*\w+\[[^\]]*\])+);",{
     param($m)
     $type=$m.Groups[1].Value
-    return (($m.Groups[2].Value.Split(',') | ForEach-Object { "$type[] $($_.Trim().Replace('[]',''))=InitArray<$type>(0);" }) -join ' ')
+    return (($m.Groups[2].Value.Split(',') | ForEach-Object {
+        $array=[regex]::Match($_.Trim(),'^(\w+)\[([^\]]*)\]$')
+        $size=$array.Groups[2].Value; if(!$size) {$size='0'}
+        "$type[] $($array.Groups[1].Value)=InitArray<$type>($size);"
+    }) -join ' ')
 })
 $source=[regex]::Replace($source,"\b($types)\s+(\w+)\[\d*\]\s*=\s*\{",'$1[] $2 = new $1[] {')
 $source=[regex]::Replace($source,"\b($types)\s+(\w+)\[([^\]]*)\]\s*;",{
@@ -238,7 +244,7 @@ public static class ICTCoreRuntime {
  public static bool g_ict_chart_collect=false;
  public static string g_ict_chart_prefix="";
  public static int g_ict_chart_zone_tf=PERIOD_CURRENT,g_ict_chart_font=10,g_ict_chart_zone_suppressed=0;
- public class MqlRates { public long time; public double open,high,low,close; }
+ public class MqlRates { public long time,tick_volume,real_volume; public int spread; public double open,high,low,close; }
  public class MqlDateTime { public int year,mon,day,hour,min,sec; }
  public static int PeriodSeconds(int tf) {if(tf>0 && tf<60)return tf*60;if(tf>=16385 && tf<=16408)return (tf-16384)*3600;if(tf==32769)return 604800;if(tf==49153)return 2592000;return 0;}
  public static long Stamp(string text) {return (long)(DateTime.ParseExact(text,new string[]{"yyyy.MM.dd","yyyy.MM.dd HH:mm","yyyy.MM.dd HH:mm:ss"},System.Globalization.CultureInfo.InvariantCulture,System.Globalization.DateTimeStyles.AssumeUniversal|System.Globalization.DateTimeStyles.AdjustToUniversal)-new DateTime(1970,1,1,0,0,0,DateTimeKind.Utc)).TotalSeconds;}
@@ -255,7 +261,7 @@ public static class ICTCoreRuntime {
  public static double MathAbs(double x){return Math.Abs(x);} public static int MathAbs(int x){return Math.Abs(x);} public static long MathAbs(long x){return Math.Abs(x);}
  public static double MathMax(double a,double b){return Math.Max(a,b);} public static int MathMax(int a,int b){return Math.Max(a,b);} public static long MathMax(long a,long b){return Math.Max(a,b);}
  public static double MathMin(double a,double b){return Math.Min(a,b);} public static int MathMin(int a,int b){return Math.Min(a,b);} public static long MathMin(long a,long b){return Math.Min(a,b);}
- public static double MathLog(double x){return Math.Log(x);} public static double MathSqrt(double x){return Math.Sqrt(x);} public static double MathSin(double x){return Math.Sin(x);}
+ public static double MathLog(double x){return Math.Log(x);} public static double MathSqrt(double x){return Math.Sqrt(x);} public static double MathSin(double x){return Math.Sin(x);} public static double MathExp(double x){return Math.Exp(x);}
  public static double MathPow(double x,double y){return Math.Pow(x,y);} public static double MathRound(double x){return Math.Round(x,MidpointRounding.AwayFromZero);}
  public static bool MathIsValidNumber(double x){return !Double.IsNaN(x) && !Double.IsInfinity(x);}
  public static int StringLen(string x){return x.Length;} public static int StringGetCharacter(string x,int at){return x[at];}
@@ -270,7 +276,7 @@ public static class ICTCoreRuntime {
  public static int StringCompare(string a,string b){return String.CompareOrdinal(a,b);}
  static int failures,checks;static StringBuilder log=new StringBuilder();
  public static void Check(string name,bool value){checks++;if(!value)failures++;log.AppendLine(name+(value?" PASS":" FAIL"));}
- public static string Run(){failures=0;checks=0;log.Length=0;RunUnifiedCoreFixtures();RunUnifiedDiagnosticFixtures();TestChartLayout();TestDashboardVietnamese();TestSignalBridge();log.AppendLine("ICTCoreFixtures RESULT checks="+checks+" failures="+failures);return log.ToString();}
+ public static string Run(){failures=0;checks=0;log.Length=0;RunUnifiedCoreFixtures();RunUnifiedDiagnosticFixtures();TestChartLayout();TestDashboardVietnamese();TestSignalBridge();RunICTStatisticalLearningFixtures();RunICTSweepFocusFixtures();RunICTAnalyticalFixtures();log.AppendLine("ICTCoreFixtures RESULT checks="+checks+" failures="+failures);return log.ToString();}
 '@
 $runtimeTypeName='ICTCoreRuntime_'+[Guid]::NewGuid().ToString('N')
 $helpers=$helpers.Replace('public static class ICTCoreRuntime {',"public static class $runtimeTypeName {")

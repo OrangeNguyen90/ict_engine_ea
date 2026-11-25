@@ -2,6 +2,8 @@
 
 Workspace gồm mã MT5 ở các thư mục gốc và ứng dụng Django trong `ai/`. Ứng dụng giữ nguyên kho kiến thức, RAG, API và phân tích nến của dự án ICT AI. Script `Tests/ExportMarketCandles.mq5` xuất OHLCV từ MT5; importer hiện có ghi dữ liệu và nguồn vào Django. Đây là luồng chuyển tệp thủ công một chiều, không đồng bộ liên tục, không chuyển tín hiệu của EA và không gửi lệnh giao dịch. Hai engine ICT có quy tắc riêng, không mặc định cho kết quả giống nhau.
 
+Nhánh nghiên cứu có thêm [mô hình ML/DL đóng băng và cầu nối dự báo tham khảo vào Smart EA](ML_PREDICTION_EA.md). Luồng này dùng JSON trọng số, producer Python độc lập với Django và snapshot tệp có model pin/UTC/expiry; mặc định tắt và không đưa dự báo vào quyết định hay đường quản lý lệnh. Producer watch chỉ đọc export được cập nhật riêng, chưa đồng bộ realtime MT5. Bộ US500 local chưa đủ điều kiện nguồn để fit mô hình thực tế.
+
 ## Cấu hình ứng dụng
 
 Làm theo `ai/README.md`: tạo môi trường Python, cài `ai/requirements.txt`, sao chép `ai/.env.example` thành `ai/.env`, cấu hình PostgreSQL và Ollama, sau đó chạy migration và server từ `ai/`. Bản sao không chứa `.env`, môi trường ảo hay database SQLite của dự án cũ. Nếu cần dùng dữ liệu PostgreSQL cũ, cấu hình kết nối tới database hiện có; kiểm tra và sao lưu trước khi chạy migration. Nếu dữ liệu nằm trong SQLite cũ, cần di chuyển riêng; không có thao tác di chuyển dữ liệu tự động.

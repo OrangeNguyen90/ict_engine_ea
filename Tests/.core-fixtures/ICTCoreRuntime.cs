@@ -1,7 +1,7 @@
 using System;
 using System.Reflection;
 using System.Text;
-public static class ICTCoreRuntime_d4a1daafec794b12bc4fe77c2c2c5527 {
+public static class ICTCoreRuntime_99776ce725d949c68a8d6fb520c13d17 {
  public const double DBL_MAX=double.MaxValue;
  public static double ICTNumber(object value){return Convert.ToDouble(value,System.Globalization.CultureInfo.InvariantCulture);}
  public const int PERIOD_CURRENT=0,PERIOD_M1=1,PERIOD_M2=2,PERIOD_M3=3,PERIOD_M4=4,PERIOD_M5=5,PERIOD_M6=6,PERIOD_M10=10,PERIOD_M12=12,PERIOD_M15=15,PERIOD_M20=20,PERIOD_M30=30;
@@ -12,7 +12,7 @@ public static class ICTCoreRuntime_d4a1daafec794b12bc4fe77c2c2c5527 {
  public static bool g_ict_chart_collect=false;
  public static string g_ict_chart_prefix="";
  public static int g_ict_chart_zone_tf=PERIOD_CURRENT,g_ict_chart_font=10,g_ict_chart_zone_suppressed=0;
- public class MqlRates { public long time; public double open,high,low,close; }
+ public class MqlRates { public long time,tick_volume,real_volume; public int spread; public double open,high,low,close; }
  public class MqlDateTime { public int year,mon,day,hour,min,sec; }
  public static int PeriodSeconds(int tf) {if(tf>0 && tf<60)return tf*60;if(tf>=16385 && tf<=16408)return (tf-16384)*3600;if(tf==32769)return 604800;if(tf==49153)return 2592000;return 0;}
  public static long Stamp(string text) {return (long)(DateTime.ParseExact(text,new string[]{"yyyy.MM.dd","yyyy.MM.dd HH:mm","yyyy.MM.dd HH:mm:ss"},System.Globalization.CultureInfo.InvariantCulture,System.Globalization.DateTimeStyles.AssumeUniversal|System.Globalization.DateTimeStyles.AdjustToUniversal)-new DateTime(1970,1,1,0,0,0,DateTimeKind.Utc)).TotalSeconds;}
@@ -29,7 +29,7 @@ public static class ICTCoreRuntime_d4a1daafec794b12bc4fe77c2c2c5527 {
  public static double MathAbs(double x){return Math.Abs(x);} public static int MathAbs(int x){return Math.Abs(x);} public static long MathAbs(long x){return Math.Abs(x);}
  public static double MathMax(double a,double b){return Math.Max(a,b);} public static int MathMax(int a,int b){return Math.Max(a,b);} public static long MathMax(long a,long b){return Math.Max(a,b);}
  public static double MathMin(double a,double b){return Math.Min(a,b);} public static int MathMin(int a,int b){return Math.Min(a,b);} public static long MathMin(long a,long b){return Math.Min(a,b);}
- public static double MathLog(double x){return Math.Log(x);} public static double MathSqrt(double x){return Math.Sqrt(x);} public static double MathSin(double x){return Math.Sin(x);}
+ public static double MathLog(double x){return Math.Log(x);} public static double MathSqrt(double x){return Math.Sqrt(x);} public static double MathSin(double x){return Math.Sin(x);} public static double MathExp(double x){return Math.Exp(x);}
  public static double MathPow(double x,double y){return Math.Pow(x,y);} public static double MathRound(double x){return Math.Round(x,MidpointRounding.AwayFromZero);}
  public static bool MathIsValidNumber(double x){return !Double.IsNaN(x) && !Double.IsInfinity(x);}
  public static int StringLen(string x){return x.Length;} public static int StringGetCharacter(string x,int at){return x[at];}
@@ -44,7 +44,7 @@ public static class ICTCoreRuntime_d4a1daafec794b12bc4fe77c2c2c5527 {
  public static int StringCompare(string a,string b){return String.CompareOrdinal(a,b);}
  static int failures,checks;static StringBuilder log=new StringBuilder();
  public static void Check(string name,bool value){checks++;if(!value)failures++;log.AppendLine(name+(value?" PASS":" FAIL"));}
- public static string Run(){failures=0;checks=0;log.Length=0;RunUnifiedCoreFixtures();RunUnifiedDiagnosticFixtures();TestChartLayout();TestDashboardVietnamese();TestSignalBridge();log.AppendLine("ICTCoreFixtures RESULT checks="+checks+" failures="+failures);return log.ToString();}
+ public static string Run(){failures=0;checks=0;log.Length=0;RunUnifiedCoreFixtures();RunUnifiedDiagnosticFixtures();TestChartLayout();TestDashboardVietnamese();TestSignalBridge();RunICTStatisticalLearningFixtures();RunICTSweepFocusFixtures();RunICTAnalyticalFixtures();log.AppendLine("ICTCoreFixtures RESULT checks="+checks+" failures="+failures);return log.ToString();}
 public const int ICT_SWEEP_SEQUENCE_MAX=32;
 public const int ICT_SWEEP_SNAPSHOT_MAX=64;
 public const int ICT_SMART_SMT_MAX=512;
@@ -62,6 +62,16 @@ public const int ICT_SMT_PAYLOAD_FIELDS=20;
 public const int ICT_SMT_PAYLOAD_MAX_BYTES=4194304;
 public const int ICT_U_NUMBERS_MAX=32768;
 public const int ICT_U_STRINGS_MAX=4096;
+public const int ICT_STAT_FEATURES=32;
+public const int ICT_STAT_H1=12;
+public const int ICT_STAT_H2=6;
+public const int ICT_STAT_CLASSES=3;
+public const int ICT_STAT_LR_WEIGHTS=99;
+public const int ICT_STAT_DNN_WEIGHTS=495;
+public const int ICT_STAT_EPOCHS=32;
+public const int ICT_STAT_DEEP_EPOCHS=24;
+public const int ICT_SWEEP_FOCUS_H1_BARS=120;
+public const int ICT_ANALYSIS_GROUPS=6;
 
 
 
@@ -152,7 +162,7 @@ public static bool ICTResolveTimeframes(int chart,bool automatic,int ltf_overrid
    if(htf_override!=PERIOD_CURRENT) result_out.htf=htf_override;
    if(result_out.mtf==PERIOD_CURRENT || result_out.htf==PERIOD_CURRENT)
      {
-      
+
       if(mtf_override!=PERIOD_CURRENT || htf_override!=PERIOD_CURRENT) return false;
       return true;
      }
@@ -297,7 +307,7 @@ public static int ICTSignalSameBarAction(SICTSignalResult previous,SICTSignalRes
 
 
 public static void ICTSignalReconcileCommittedLive(SICTSignalResult committed,SICTSignalResult current) {
-   if(!current.confirmed) return; 
+   if(!current.confirmed) return;
    bool same=current.id==committed.id && current.symbol==committed.symbol &&
       current.asof==committed.asof && current.trigger_bar==committed.trigger_bar &&
       current.direction==committed.direction && current.entry==committed.entry &&
@@ -309,8 +319,8 @@ public static void ICTSignalReconcileCommittedLive(SICTSignalResult committed,SI
       current.confirmation_time==current.asof && current.source_event_time<=current.asof &&
       current.target_pool_id!="" && ICTSignalPlanValid(current,2) &&
       current.state==(current.direction>0 ? ICT_SIGNAL_BUY_CONFIRMED : ICT_SIGNAL_SELL_CONFIRMED);
-   
-   
+
+
    if(same) return;
    current.confirmed=false; current.state=ICT_SIGNAL_NO_TRADE; current.risk_pass=false;
    current.confirmation_time=0;
@@ -352,7 +362,7 @@ public static bool ICTMergeConfirmedSignal(SICTSignalResult s,ref SICTSignalResu
       if(history[i].id==s.id || (history[i].symbol==s.symbol && history[i].frames.ltf==s.frames.ltf &&
                               history[i].trigger_bar==s.trigger_bar)) return false;
    int n=ArraySize(history);
-   if(n>=maximum) return false; 
+   if(n>=maximum) return false;
    ArrayResize(ref history,n+1); history[n]=s; return true;
   }
 
@@ -853,8 +863,8 @@ public static bool SRMPFindSMTPairFromRates(string primary,string comparison,int
       if(distance<=gap && distance<best_prior) { matched_prior=j; best_prior=distance; }
      }
    if(matched_prior<0) return false;
-   
-   
+
+
    int start=(int)MathMax(0,MathMin(prior,recent)-gap);
    for(int k=start;k<an;k++)
      {
@@ -941,7 +951,7 @@ public static void SRMPUpdateFVGEvidence(MqlRates bar,SFairValueGap gap) {
    if(invalid)
      {
       gap.status=SRMP_FVG_INVALIDATED;
-      gap.mitigated=true; 
+      gap.mitigated=true;
       if(gap.invalidated_time==0) gap.invalidated_time=bar.time;
       gap.inversion_evidence=true;
       gap.inversion_direction=-gap.direction;
@@ -976,7 +986,7 @@ public static bool SRMPFindFVGFromRates(MqlRates[] rates,int count,double min_ga
       if(!SRMPFVGAtRates(rates,count,i,min_gap,candidate)) continue;
       if(desired_direction!=0 && candidate.direction!=desired_direction) continue;
       if(!found) { gap=candidate; found=true; }
-      
+
       if(!candidate.mitigated) { gap=candidate; return true; }
      }
    return found;
@@ -1071,7 +1081,7 @@ public static bool SRMPFindOrderBlockFromRates(MqlRates[] rates,int count,int bo
       desired_direction<-1 || desired_direction>1 || expiry_bars<1) return false;
    if(!SRMPValidDetectorRates(rates,count)) return false;
    bool has_candidate=false;
-   
+
    for(int i=count-1;i>=15;i--)
      {
       int direction=0;
@@ -1150,7 +1160,7 @@ public static bool SRMPFindOrderBlockFromRates(MqlRates[] rates,int count,int bo
                                        block.midpoint>=equilibrium);
          MqlDateTime tm=new MqlDateTime();
          TimeToStruct(block.formation_time,tm);
-         block.session_match=(tm.hour>=7 && tm.hour<21); 
+         block.session_match=(tm.hour>=7 && tm.hour<21);
          if(active_only)
            {
             SRMPValidateOrderBlockFromRates(rates,count,SRMP_OB_TOUCH,SRMP_OB_CLOSE,expiry_bars,block);
@@ -1282,7 +1292,7 @@ public static void ICTSweepSequenceStep(SICTSweepSequence s,MqlRates bar,int sec
       s.bars_after_confirmation++;
       if(s.bars_after_confirmation>=min_bars && outside<=-rejection)
          s.armed=true;
-      return; 
+      return;
      }
    if(s.armed && !s.candidate && excursion>penetration)
      {
@@ -1305,7 +1315,7 @@ public static void ICTSweepSequenceStep(SICTSweepSequence s,MqlRates bar,int sec
       s.candidate=false; s.bars_after_confirmation=0; return;
      }
    if(s.candidate_age>=validation_bars)
-     { s.events[n].status=ICT_SWEEP_INVALIDATED; s.candidate=false; s.valid=false; } 
+     { s.events[n].status=ICT_SWEEP_INVALIDATED; s.candidate=false; s.valid=false; }
   }
 
 
@@ -1668,8 +1678,8 @@ public static int ICTSMTTimeframes(SICTTimeframes map,int mode,int manual,ref in
       bool duplicate=false; for(int j=0;j<ArraySize(frames);j++) if(frames[j]==requested[i]) duplicate=true;
       if(!duplicate) { int size=ArraySize(frames); ArrayResize(ref frames,size+1); frames[size]=requested[i]; }
      }
-   
-   
+
+
    if(mode!=SMT_MANUAL && chart_tf!=PERIOD_CURRENT && PeriodSeconds(chart_tf)>0)
      {
       bool present=false; for(int i=0;i<ArraySize(frames);i++) if(frames[i]==chart_tf) present=true;
@@ -1910,7 +1920,7 @@ public double sweep_tolerance_ticks;
 public static void ICTDefaultRangeConfig(SICTRangeConfig c) {
    ZeroMemory(c); c.enabled=true; c.htf=PERIOD_H4; c.mtf=PERIOD_M15; c.ltf=PERIOD_M5;
    c.lookback=240; c.liquidity_seed_bars=10000; c.left=2; c.right=2; c.max_zone_age=48; c.breakout_bars=2;
-   c.zone_mode=2; 
+   c.zone_mode=2;
    c.min_range_ticks=20; c.tolerance_ticks=2; c.tolerance_atr=0.02; c.equal_ticks=3;
    c.equal_atr=0.02; c.equal_spread=1.0;
    c.penetration_ticks=3; c.penetration_atr=0.05; c.approach_atr=0.25;
@@ -1918,14 +1928,14 @@ public static void ICTDefaultRangeConfig(SICTRangeConfig c) {
    c.displacement_fraction=0.6; c.stop_buffer_ticks=2;
    c.require_mss=true; c.require_displacement=true; c.use_ob=true;
    c.allow_continuation=true; c.export_history=true;
-   
-   
+
+
    c.breakout_displacement_confirms=true; c.breakout_require_displacement=false;
    c.breakout_buffer_ticks=0; c.breakout_buffer_atr=0; c.breakout_failure_ticks=0;
    c.retest_tolerance_ticks=2; c.retest_tolerance_atr=0.02; c.retest_close_buffer_ticks=1;
    c.retest_window_bars=8; c.liquidity_history_bars=60;
    c.enable_sweep_sequence=true; c.sweep_min_bars=2; c.sweep_validation_bars=3;
-   c.sweep_mode=SWEEP_1_ALLOWED; 
+   c.sweep_mode=SWEEP_1_ALLOWED;
    c.sweep_rejection_ticks=3; c.sweep_tolerance_ticks=0;
   }
 
@@ -2027,6 +2037,15 @@ public double wick;
 public double close;
 }
 
+
+
+
+public static bool ICTRangeLevelUntouched(SICTRangeLevel l,long asof) {
+   return l.id!="" && l.available_at>0 && l.available_at<=asof &&
+      MathIsValidNumber(l.price) && l.price>0 && (l.side==1 || l.side==-1) &&
+      (l.state==IR_UNTOUCHED || l.state==IR_APPROACHING) &&
+      l.last_event==IR_EVENT_NONE && l.sweep_count==0 && !l.candidate && l.outside_closes==0;
+  }
 
 public class SICTRangeZone {
 public string id=string.Empty;
@@ -2216,12 +2235,12 @@ public static double ICTRangeATR(MqlRates[] rates,int count,int period=14) {
    for(int i=count-period;i<count;i++)
       sum+=MathMax(rates[i].high-rates[i].low,
            MathMax(MathAbs(rates[i].high-rates[i-1].close),MathAbs(rates[i].low-rates[i-1].close)));
-   return sum/period; 
+   return sum/period;
   }
 
 public static bool ICTRangeDisplacement(MqlRates[] rates,int index,int direction,SICTRangeConfig c) {
    if(index<15 || index>=ArraySize(rates)) return false;
-   double atr=ICTRangeATR(rates,index); 
+   double atr=ICTRangeATR(rates,index);
    double body=(rates[index].close-rates[index].open)*direction;
    double width=rates[index].high-rates[index].low;
    return atr>0 && width>0 && body>=c.displacement_atr*atr && body/width>=c.displacement_fraction;
@@ -2250,7 +2269,7 @@ public static int ICTRangeMembership(SICTDealingRange r,double low,double high,d
    if(high<r.low-tolerance || low>r.high+tolerance) return IR_OUTSIDE;
    if(low==high && (MathAbs(low-r.low)<=tolerance || MathAbs(high-r.high)<=tolerance)) return IR_BOUNDARY;
    if(low>r.low+tolerance && high<r.high-tolerance) return IR_INTERNAL;
-   return IR_CROSSING; 
+   return IR_CROSSING;
   }
 
 public static void ICTRangeAddLevel(SICTRangeSnapshot s,string name,double price,int side,long available,double tolerance,int source_tf=PERIOD_CURRENT) {
@@ -2300,7 +2319,7 @@ public static void ICTRangeAdvanceLevelConfigured(MqlRates bar,long close_time,d
       l.breakout_age++;
       if(outside<-failure_buffer)
         {
-         
+
          ICTRangeSetLevelEvent(l,IR_EVENT_FALSE_BREAKOUT,bar,close_time,bar.time,extreme);
          l.state=IR_CONSUMED; l.retest_pending=false; return;
         }
@@ -2320,8 +2339,8 @@ public static void ICTRangeAdvanceLevelConfigured(MqlRates bar,long close_time,d
      {
       if(outside>breakout_buffer) { l.state=IR_CONSUMED; return; }
      }
-   
-   
+
+
    if(!l.sweep_armed && !l.candidate)
      {
       l.sweep_wait_bars++;
@@ -2331,7 +2350,7 @@ public static void ICTRangeAdvanceLevelConfigured(MqlRates bar,long close_time,d
      }
    if(l.candidate && (l.candidate_wick_time<=0 || (extreme-l.candidate_wick)*l.side>0))
      { l.candidate_wick=extreme; l.candidate_wick_time=bar.time; }
-   if(l.candidate) l.breakout_age++; 
+   if(l.candidate) l.breakout_age++;
    if(outside>breakout_buffer)
      {
       if(!l.candidate) { l.candidate_wick=extreme; l.candidate_wick_time=bar.time; l.breakout_age=1; }
@@ -2351,8 +2370,8 @@ public static void ICTRangeAdvanceLevelConfigured(MqlRates bar,long close_time,d
      {
       if(l.breakout_age>c.sweep_validation_bars)
         {
-         
-         
+
+
          l.state=IR_LEVEL_INVALIDATED; ICTRangeClearLevelCandidate(l); return;
         }
       l.state=IR_SWEPT;
@@ -3021,6 +3040,7 @@ public static bool ICTUnifiedUnpack(double[] v,string[] t,SICTUnifiedSnapshot s)
 
 public const int ICT_POSITION_BALANCE=0;
 public const int ICT_POSITION_EQUITY=1;
+public const int ICT_POSITION_CONSERVATIVE=2;
 
 public const int ICT_RISK_LIMIT_UNKNOWN=-1;
 public const int ICT_RISK_LIMIT_NORMAL=0;
@@ -3067,6 +3087,7 @@ public double locked_money;
 public double locked_percent;
 public double target_percent;
 public double rr;
+public double remaining_risk_money;
 }
 
 
@@ -3081,6 +3102,7 @@ public double risk_money;
 public double target_money;
 public double floating;
 public double costs;
+public double remaining_risk_money;
 }
 
 
@@ -3096,6 +3118,21 @@ public double equity;
 public double capital;
 public double cost_per_lot;
 public bool connected;
+public int pending_count;
+public int unknown_pending;
+public double pending_risk_money;
+public double margin;
+public double free_margin;
+public double margin_level;
+public double daily_net;
+public bool daily_valid;
+public bool margin_valid;
+public bool protection_online;
+public bool protection_armed;
+public bool protection_healthy;
+public bool daily_opened_valid;
+public double daily_opened_risk_money;
+public int protection_state;
 public SICTPositionRiskTotals totals=new SICTPositionRiskTotals();
 public SICTPositionRisk[] positions=InitArray<SICTPositionRisk>(0);
 }
@@ -3106,6 +3143,13 @@ public static bool ICTPositionCapitalValid(double capital) { return MathIsValidN
 public static double ICTPositionPercent(double money,double capital) {
    if(!MathIsValidNumber(money) || !ICTPositionCapitalValid(capital)) return 0.0;
    return money/capital*100.0;
+  }
+
+
+public static double ICTConservativeRiskCapital(double reference,double balance,double equity) {
+   if(!ICTPositionCapitalValid(reference) || !ICTPositionCapitalValid(balance) ||
+      !ICTPositionCapitalValid(equity)) return 0.0;
+   return MathMin(reference,MathMin(balance,equity));
   }
 
 
@@ -3150,6 +3194,8 @@ public static bool ICTCalculatePositionRisk(SICTPositionRiskInput exposure,doubl
          risk.locked_money=MathMax(0.0,risk.net_at_stop);
          risk.risk_percent=ICTPositionPercent(risk.risk_money,capital);
          risk.locked_percent=ICTPositionPercent(risk.locked_money,capital);
+         if(risk.floating_valid)
+            risk.remaining_risk_money=MathMax(0.0,risk.floating-risk.net_at_stop);
         }
      }
    if(exposure.target_valued && MathIsValidNumber(exposure.target) && exposure.target>0.0 &&
@@ -3180,9 +3226,1248 @@ public static void ICTAccumulatePositionRisk(SICTPositionRisk risk,SICTPositionR
    if(risk.stop_valid) totals.risk_money+=risk.risk_money; else totals.unknown_stops++;
    if(risk.target_valid) totals.target_money+=risk.net_at_target; else totals.unknown_targets++;
    if(risk.floating_valid) totals.floating+=risk.floating; else totals.unknown_floating++;
+   if(risk.stop_valid && risk.floating_valid) totals.remaining_risk_money+=risk.remaining_risk_money;
   }
 
 
+
+public static bool ICTPositionEntryBudgetAllowed(SICTPositionRiskSnapshot s,double candidate_risk,double reference,double portfolio_limit,double daily_limit,ref string reason,bool require_daily_risk=true) {
+   reason="";
+   double capital=ICTConservativeRiskCapital(reference,s.balance,s.equity);
+   if(!ICTPositionCapitalValid(capital) || !MathIsValidNumber(candidate_risk) || candidate_risk<=0.0 ||
+      !MathIsValidNumber(portfolio_limit) || portfolio_limit<0.0 || portfolio_limit>100.0 ||
+      !MathIsValidNumber(daily_limit) || daily_limit<=0.0 || daily_limit>6.0 ||
+      candidate_risk>capital*3.0/100.0+1e-8)
+     { reason="Invalid account risk budget"; return false; }
+   if(s.symbol_filter!="" || !s.connected || s.selection_errors>0 || s.totals.invalid_positions>0 ||
+      s.totals.unknown_stops>0 || s.totals.unknown_floating>0 || s.unknown_pending>0)
+     { reason="Account exposure or SL valuation unavailable"; return false; }
+   if(!MathIsValidNumber(s.totals.risk_money) || s.totals.risk_money<0.0 ||
+      !MathIsValidNumber(s.totals.remaining_risk_money) || s.totals.remaining_risk_money<0.0 ||
+      !MathIsValidNumber(s.pending_risk_money) || s.pending_risk_money<0.0)
+     { reason="Invalid account exposure totals"; return false; }
+   double loss=s.totals.risk_money+s.pending_risk_money+candidate_risk;
+   double remaining=s.totals.remaining_risk_money+s.pending_risk_money+candidate_risk;
+   if(!MathIsValidNumber(loss) || !MathIsValidNumber(remaining))
+     { reason="Account exposure overflow"; return false; }
+   if(portfolio_limit>0.0 && MathMax(loss,remaining)>capital*portfolio_limit/100.0+1e-8)
+     { reason="Portfolio SL risk budget exceeded (positions + pending + new trade)"; return false; }
+
+
+   if(daily_limit>0.0 && (!s.daily_valid || !MathIsValidNumber(s.daily_net) ||
+      s.daily_net<=-capital*daily_limit/100.0 ||
+      s.daily_net-remaining < -capital*daily_limit/100.0-1e-8))
+     { reason="Daily loss budget exhausted or account history unavailable"; return false; }
+   if(require_daily_risk && (!s.daily_opened_valid || !MathIsValidNumber(s.daily_opened_risk_money) ||
+      s.daily_opened_risk_money<0.0 ||
+      s.daily_opened_risk_money+s.pending_risk_money+candidate_risk>capital*daily_limit/100.0+1e-8))
+     { reason="Daily opened-risk budget exhausted or original SL history unavailable"; return false; }
+   return true;
+  }
+
+
+
+
+
+
+
+
+public class SPositionPlanValidation {
+public int direction;
+public long opened_at;
+public long now;
+public long plan_revision;
+public long plan_published;
+public long quote_time;
+public int max_position_age;
+public int max_plan_age;
+public int max_quote_age;
+public int max_entry_deviation_points;
+public double entry;
+public double planned_entry;
+public double sl;
+public double tp;
+public double existing_sl;
+public double existing_tp;
+public double bid;
+public double ask;
+public double point;
+public double tick;
+public double stops_points;
+public double freeze_points;
+}
+
+
+public static bool SRMPValidatePositionPlan(SPositionPlanValidation p,ref string reason) {
+   reason="Invalid plan or market data";
+   double[] values = new double[] {p.entry,p.planned_entry,p.sl,p.tp,p.existing_sl,p.existing_tp,
+                    p.bid,p.ask,p.point,p.tick,p.stops_points,p.freeze_points};
+   for(int i=0;i<ArraySize(values);i++) if(!MathIsValidNumber(values[i])) return false;
+   if((p.direction!=1 && p.direction!=-1) || p.entry<=0 || p.planned_entry<=0 ||
+      p.sl<=0 || p.tp<=0 || p.existing_sl<0 || p.existing_tp<0 ||
+      p.bid<=0 || p.ask<p.bid || p.point<=0 || p.tick<=0 ||
+      p.stops_points<0 || p.freeze_points<0 || p.max_position_age<1 ||
+      p.max_plan_age<1 || p.max_quote_age<1 || p.max_entry_deviation_points<0) return false;
+   if(p.existing_sl>0 || p.existing_tp>0)
+     { reason="Existing SL or TP preserved"; return false; }
+   if(p.opened_at<=0 || p.now<p.opened_at || p.now-p.opened_at>p.max_position_age)
+     { reason="Position is not recent"; return false; }
+   if(p.plan_revision<=0 || p.plan_revision>p.opened_at || p.plan_published<p.plan_revision ||
+      p.plan_published>p.now || p.now-p.plan_published>p.max_plan_age)
+     { reason="Plan is stale or changed after entry"; return false; }
+   if(p.quote_time<=0 || p.quote_time>p.now || p.now-p.quote_time>p.max_quote_age)
+     { reason="Quote is stale"; return false; }
+   if(MathAbs(p.entry-p.planned_entry)>p.max_entry_deviation_points*p.point+1e-10*p.point)
+     { reason="Entry differs from plan"; return false; }
+   if(MathAbs(p.sl/p.tick-MathRound(p.sl/p.tick))>1e-5 ||
+      MathAbs(p.tp/p.tick-MathRound(p.tp/p.tick))>1e-5 ||
+      (p.direction==1 && !(p.sl<p.entry && p.tp>p.entry)) ||
+      (p.direction==-1 && !(p.sl>p.entry && p.tp<p.entry)))
+     { reason="Invalid SL/TP geometry or tick grid"; return false; }
+   double market=(p.direction==1 ? p.bid : p.ask);
+   double gap=MathMax(p.stops_points,p.freeze_points)*p.point+p.tick;
+   if((p.direction==1 && (p.sl>=market-gap || p.tp<=market+gap)) ||
+      (p.direction==-1 && (p.sl<=market+gap || p.tp>=market-gap)))
+     { reason="SL/TP inside broker stop or freeze distance"; return false; }
+   reason="Position and plan geometry valid";
+   return true;
+  }
+
+
+public static bool SRMPValidatePositionPlanRisk(double gross_loss,double gross_reward,double estimated_cost,double reference,double max_risk_percent,double min_rr,ref string reason) {
+   reason="Invalid risk inputs";
+   if(!MathIsValidNumber(gross_loss) || !MathIsValidNumber(gross_reward) ||
+      !MathIsValidNumber(estimated_cost) || !MathIsValidNumber(reference) ||
+      !MathIsValidNumber(max_risk_percent) || !MathIsValidNumber(min_rr) ||
+      gross_loss>=0 || gross_reward<=0 || estimated_cost<0 || reference<=0 ||
+      max_risk_percent<=0 || max_risk_percent>3 || min_rr<2)
+      return false;
+   double loss=-gross_loss+estimated_cost,reward=gross_reward-estimated_cost;
+   if(loss<=0 || reward<=0 || loss>reference*max_risk_percent/100.0+1e-8 || reward/loss+1e-9<min_rr)
+     { reason="Position risk or net RR outside limits"; return false; }
+   reason="Position risk and net RR valid";
+   return true;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+public class SICTStatConfig {
+public int history_bars;
+public int horizon;
+public int min_train;
+public int min_evaluation;
+public int min_pattern;
+public int retrain_bars;
+public double move_atr;
+}
+
+public class SICTStatSample {
+public double[] x=InitArray<double>(ICT_STAT_FEATURES);
+public int label;
+public int mask;
+public long asof;
+public long label_end;
+}
+
+public class SICTStatModel {
+public double[] mean=InitArray<double>(ICT_STAT_FEATURES);
+public double[] scale=InitArray<double>(ICT_STAT_FEATURES);
+public double[] lr=InitArray<double>(ICT_STAT_LR_WEIGHTS);
+public double[] deep=InitArray<double>(ICT_STAT_DNN_WEIGHTS);
+public double[] prior=InitArray<double>(ICT_STAT_CLASSES);
+public double lr_temperature;
+public double deep_temperature;
+public int train_n;
+public int cal_start;
+public int cal_n;
+public int test_start;
+public int test_n;
+public int epoch;
+public int cursor;
+public bool fitted;
+public bool calibrated;
+public long train_end;
+public long cal_start_time;
+public long cal_end;
+public long test_start_time;
+public long test_end;
+}
+
+public class SICTStatSnapshot {
+public bool ready;
+public bool calibrated;
+public bool beats_baseline;
+public string status=string.Empty;
+public string reason=string.Empty;
+public string timeframe=string.Empty;
+public int history_n;
+public int train_n;
+public int cal_n;
+public int test_n;
+public int horizon;
+public int progress;
+public int mask;
+public double move_atr;
+public double[] ml=InitArray<double>(ICT_STAT_CLASSES);
+public double[] dl=InitArray<double>(ICT_STAT_CLASSES);
+public double[] combined=InitArray<double>(ICT_STAT_CLASSES);
+public double brier_ml;
+public double brier_dl;
+public double brier_combined;
+public double brier_baseline;
+public double accuracy;
+public double baseline_accuracy;
+public int[] pattern_n=InitArray<int>(8);
+public int[] pattern_hits=InitArray<int>(8);
+public long asof;
+public long train_end;
+public long test_end;
+}
+
+
+public static void ICTStatDefaultConfig(SICTStatConfig c) {
+   c.history_bars=6000; c.horizon=4; c.move_atr=0.25;
+   c.min_train=400; c.min_evaluation=80; c.min_pattern=30; c.retrain_bars=64;
+  }
+public static bool ICTStatValidConfig(SICTStatConfig c) {
+   return c.history_bars>=1000 && c.history_bars<=20000 && c.horizon>=1 && c.horizon<=24 &&
+      MathIsValidNumber(c.move_atr) && c.move_atr>=0.05 && c.move_atr<=3 &&
+      c.min_train>=200 && c.min_train<=5000 && c.min_evaluation>=30 && c.min_evaluation<=1000 &&
+      c.min_pattern>=10 && c.min_pattern<=1000 && c.retrain_bars>=8 && c.retrain_bars<=1000;
+  }
+public static double ICTStatClip(double x,double lo,double hi) { return MathMax(lo,MathMin(hi,x)); }
+public static double ICTStatTanh(double x) { return 2.0/(1.0+MathExp(-2.0*ICTStatClip(x,-20,20)))-1.0; }
+public static bool ICTStatValidRates(MqlRates[] r) {
+   for(int i=0;i<ArraySize(r);i++)
+     {
+      if(r[i].time<=0 || (i>0 && r[i].time<=r[i-1].time) || r[i].spread<0 ||
+         !MathIsValidNumber(r[i].open) || !MathIsValidNumber(r[i].high) ||
+         !MathIsValidNumber(r[i].low) || !MathIsValidNumber(r[i].close) ||
+         r[i].low<=0 || r[i].high<r[i].low || r[i].open<r[i].low || r[i].open>r[i].high ||
+         r[i].close<r[i].low || r[i].close>r[i].high) return false;
+     }
+   return ArraySize(r)>32;
+  }
+public static double ICTStatATR(MqlRates[] r,int i) {
+   if(i<14 || i>=ArraySize(r)) return 0;
+   double sum=0;
+   for(int k=i-13;k<=i;k++)
+      sum+=MathMax(r[k].high-r[k].low,MathMax(MathAbs(r[k].high-r[k-1].close),MathAbs(r[k].low-r[k-1].close)));
+   return sum/14.0;
+  }
+public static int ICTStatPatternMask(MqlRates[] r,int i) {
+   if(i<32 || i>=ArraySize(r)) return 0;
+   int mask=0;
+   double high=r[i-1].high,low=r[i-1].low;
+   for(int k=i-8;k<i;k++) { high=MathMax(high,r[k].high); low=MathMin(low,r[k].low); }
+
+   if(r[i].low<low && r[i].close>low && r[i].close>r[i].open) mask|=1;
+   if(r[i].high>high && r[i].close<high && r[i].close<r[i].open) mask|=2;
+   if(r[i-1].close<r[i-1].open && r[i].close>r[i].open &&
+      r[i].open<=r[i-1].close && r[i].close>=r[i-1].open) mask|=4;
+   if(r[i-1].close>r[i-1].open && r[i].close<r[i].open &&
+      r[i].open>=r[i-1].close && r[i].close<=r[i-1].open) mask|=8;
+   if(r[i].close>high) mask|=16;
+   if(r[i].close<low) mask|=32;
+   for(int j=i-1;j>=i-20;j--)
+     {
+      double lower=r[j-2].high,upper=r[j].low;
+      if(upper>lower && r[i].low<=upper && r[i].low>=lower && r[i].close>upper)
+        {
+         bool first=true;
+         for(int k=j+1;k<i;k++) if(r[k].low<=upper) { first=false; break; }
+         if(first) mask|=64;
+        }
+      lower=r[j].high; upper=r[j-2].low;
+      if(upper>lower && r[i].high>=lower && r[i].high<=upper && r[i].close<lower)
+        {
+         bool first=true;
+         for(int k=j+1;k<i;k++) if(r[k].high>=lower) { first=false; break; }
+         if(first) mask|=128;
+        }
+     }
+   return mask;
+  }
+public static bool ICTStatFeatures(MqlRates[] r,int i,double point,SICTStatSample s) {
+   ZeroMemory(s);
+   if(i<32 || i>=ArraySize(r) || !MathIsValidNumber(point) || point<=0) return false;
+   double atr=ICTStatATR(r,i);
+   if(!MathIsValidNumber(atr) || atr<=point) return false;
+   for(int k=0;k<6;k++)
+     {
+      int at=i-5+k;
+      s.x[k*4]=(r[at].open-r[i].close)/atr;
+      s.x[k*4+1]=(r[at].high-r[i].close)/atr;
+      s.x[k*4+2]=(r[at].low-r[i].close)/atr;
+      s.x[k*4+3]=(r[at].close-r[i].close)/atr;
+     }
+   s.x[24]=(r[i].close-r[i-3].close)/atr;
+   s.x[25]=(r[i].close-r[i-12].close)/atr;
+   s.x[26]=(r[i].high-r[i].low)/atr;
+   s.x[27]=r[i].spread*point/atr;
+   s.mask=ICTStatPatternMask(r,i); s.asof=r[i].time;
+   for(int k=0;k<4;k++) s.x[28+k]=((s.mask & (1<<(k*2)))!=0 ? 1.0 : 0.0)-((s.mask & (2<<(k*2)))!=0 ? 1.0 : 0.0);
+   for(int k=0;k<ICT_STAT_FEATURES;k++) if(!MathIsValidNumber(s.x[k])) return false;
+   return true;
+  }
+public static int ICTStatLabel(MqlRates[] r,int i,int horizon,double move_atr,double point) {
+   if(i<32 || horizon<1 || i+horizon>=ArraySize(r)) return -1;
+   double atr=ICTStatATR(r,i),delta=r[i+horizon].close-r[i].close;
+   if(atr<=point || !MathIsValidNumber(move_atr) || move_atr<=0 || point<=0) return -1;
+   double band=move_atr*atr+r[i].spread*point;
+   return delta>band ? 0 : delta < -band ? 1 : 2;
+  }
+public static bool ICTStatBuildSamples(MqlRates[] r,double point,SICTStatConfig c,ref SICTStatSample[] samples) {
+   ArrayResize(ref samples,0);
+   if(!ICTStatValidConfig(c) || !ICTStatValidRates(r) || !MathIsValidNumber(point) || point<=0) return false;
+   int capacity=(ArraySize(r)-32)/c.horizon;
+   if(capacity<1) return false;
+   ArrayResize(ref samples,capacity); int n=0;
+
+
+   for(int i=32;i+c.horizon<ArraySize(r);i+=c.horizon)
+     {
+      SICTStatSample s=new SICTStatSample();
+      if(!ICTStatFeatures(r,i,point,s)) continue;
+      s.label=ICTStatLabel(r,i,c.horizon,c.move_atr,point);
+      if(s.label<0) continue;
+      s.label_end=r[i+c.horizon].time;
+      samples[n++]=s;
+     }
+   ArrayResize(ref samples,n);
+   return n>0;
+  }
+public static void ICTStatSoftmax(double[] logits,double temperature,ref double[] p) {
+   double peak=logits[0],sum=0;
+   for(int k=1;k<3;k++) peak=MathMax(peak,logits[k]);
+   for(int k=0;k<3;k++) { p[k]=MathExp(ICTStatClip((logits[k]-peak)/temperature,-60,0)); sum+=p[k]; }
+   for(int k=0;k<3;k++) p[k]/=sum;
+  }
+public static void ICTStatNormalize(SICTStatModel m,SICTStatSample s,ref double[] x) {
+   for(int k=0;k<ICT_STAT_FEATURES;k++) x[k]=ICTStatClip((s.x[k]-m.mean[k])/m.scale[k],-5,5);
+  }
+public static void ICTStatForward(SICTStatModel m,SICTStatSample s,bool deep,double temperature,ref double[] p) {
+   double[] x=InitArray<double>(ICT_STAT_FEATURES); double[] a=InitArray<double>(ICT_STAT_H1); double[] b=InitArray<double>(ICT_STAT_H2); double[] z=InitArray<double>(3);
+   ICTStatNormalize(m,s,ref x);
+   if(!deep)
+     {
+      for(int k=0;k<3;k++)
+        {
+         z[k]=m.lr[k*33+32];
+         for(int f=0;f<32;f++) z[k]+=m.lr[k*33+f]*x[f];
+        }
+     }
+   else
+     {
+      for(int h=0;h<12;h++)
+        { double v=m.deep[h*33+32]; for(int f=0;f<32;f++) v+=m.deep[h*33+f]*x[f]; a[h]=ICTStatTanh(v); }
+      for(int h=0;h<6;h++)
+        { double v=m.deep[396+h*13+12]; for(int f=0;f<12;f++) v+=m.deep[396+h*13+f]*a[f]; b[h]=ICTStatTanh(v); }
+      for(int k=0;k<3;k++)
+        { z[k]=m.deep[474+k*7+6]; for(int h=0;h<6;h++) z[k]+=m.deep[474+k*7+h]*b[h]; }
+     }
+   ICTStatSoftmax(z,temperature,ref p);
+  }
+public static bool ICTStatPrepare(SICTStatConfig c,SICTStatSample[] samples,SICTStatModel m,SICTStatSnapshot s) {
+   ZeroMemory(m); ZeroMemory(s);
+   s.status="INSUFFICIENT_DATA"; s.reason="Chưa đủ mẫu để chia train / hiệu chỉnh / kiểm định";
+   s.horizon=c.horizon; s.move_atr=c.move_atr;
+   if(!ICTStatValidConfig(c)) { s.status="INVALID_CONFIG"; s.reason="Tham số ML/DL không hợp lệ"; return false; }
+   int n=ArraySize(samples);
+   for(int i=0;i<n;i++)
+     {
+      if(samples[i].label<0 || samples[i].label>2 || samples[i].asof<=0 || samples[i].label_end<=samples[i].asof ||
+         (i>0 && samples[i].asof<=samples[i-1].asof))
+        { s.status="INVALID_SAMPLES"; s.reason="Mẫu hoặc nhãn thời gian không hợp lệ"; return false; }
+      for(int f=0;f<32;f++)
+         if(!MathIsValidNumber(samples[i].x[f]))
+           { s.status="INVALID_SAMPLES"; s.reason="Feature không hữu hạn"; return false; }
+     }
+   m.train_n=n*65/100; m.cal_start=m.train_n+1; m.cal_n=n*15/100;
+   m.test_start=m.cal_start+m.cal_n+1; m.test_n=n-m.test_start;
+   s.train_n=m.train_n; s.cal_n=m.cal_n; s.test_n=m.test_n;
+   if(m.train_n<c.min_train || m.cal_n<c.min_evaluation || m.test_n<c.min_evaluation) return false;
+   m.train_end=samples[m.train_n-1].label_end; m.cal_start_time=samples[m.cal_start].asof;
+   m.cal_end=samples[m.cal_start+m.cal_n-1].label_end; m.test_start_time=samples[m.test_start].asof;
+   m.test_end=samples[n-1].label_end;
+   if(m.train_end>=m.cal_start_time || m.cal_end>=m.test_start_time)
+     { s.status="INVALID_SPLIT"; s.reason="Nhãn bị chồng lấn qua ranh giới thời gian"; return false; }
+   int[] counts=InitArray<int>(3); ArrayInitialize(counts,0);
+   for(int i=0;i<m.train_n;i++)
+     {
+      if(samples[i].label<0 || samples[i].label>2) return false;
+      counts[samples[i].label]++;
+      for(int f=0;f<32;f++) m.mean[f]+=samples[i].x[f]/m.train_n;
+     }
+   for(int k=0;k<3;k++)
+     {
+      if(counts[k]<15) { s.status="INSUFFICIENT_CLASSES"; s.reason="Cần ít nhất 15 mẫu mỗi lớp trong train"; return false; }
+      m.prior[k]=(counts[k]+1.0)/(m.train_n+3.0);
+     }
+   for(int i=0;i<m.train_n;i++)
+      for(int f=0;f<32;f++) { double d=samples[i].x[f]-m.mean[f]; m.scale[f]+=d*d/m.train_n; }
+   for(int f=0;f<32;f++) m.scale[f]=MathMax(0.000001,MathSqrt(m.scale[f]));
+   for(int h=0;h<12;h++)
+      for(int f=0;f<32;f++) m.deep[h*33+f]=MathSin((h*33+f+1)*12.9898)*MathSqrt(6.0/44.0);
+   for(int h=0;h<6;h++)
+      for(int f=0;f<12;f++) m.deep[396+h*13+f]=MathSin((h*13+f+501)*12.9898)*MathSqrt(6.0/18.0);
+   for(int k=0;k<3;k++)
+     {
+      m.lr[k*33+32]=MathLog(m.prior[k]); m.deep[474+k*7+6]=MathLog(m.prior[k]);
+      for(int h=0;h<6;h++) m.deep[474+k*7+h]=MathSin((k*7+h+701)*12.9898)*MathSqrt(6.0/9.0);
+     }
+   m.lr_temperature=1; m.deep_temperature=1;
+   s.status="TRAINING"; s.reason="Đang học logistic + DNN 32-12-6-3 từ nến đóng";
+   return true;
+  }
+public static void ICTStatTrainSample(SICTStatModel m,SICTStatSample s,bool train_deep) {
+   double[] x=InitArray<double>(32); double[] p=InitArray<double>(3); double[] a=InitArray<double>(12); double[] b=InitArray<double>(6); double[] z=InitArray<double>(3); double[] d3=InitArray<double>(3); double[] d2=InitArray<double>(6); double[] d1=InitArray<double>(12);
+   ICTStatNormalize(m,s,ref x); ICTStatForward(m,s,false,1,ref p);
+   double rate=0.015/(1.0+m.epoch*0.04),decay=0.0005;
+   for(int k=0;k<3;k++)
+     {
+      double d=p[k]-(s.label==k ? 1.0 : 0.0);
+      for(int f=0;f<32;f++) m.lr[k*33+f]-=rate*(d*x[f]+decay*m.lr[k*33+f]);
+      m.lr[k*33+32]-=rate*d;
+     }
+   if(!train_deep) return;
+   for(int h=0;h<12;h++)
+     { double v=m.deep[h*33+32]; for(int f=0;f<32;f++) v+=m.deep[h*33+f]*x[f]; a[h]=ICTStatTanh(v); }
+   for(int h=0;h<6;h++)
+     { double v=m.deep[396+h*13+12]; for(int f=0;f<12;f++) v+=m.deep[396+h*13+f]*a[f]; b[h]=ICTStatTanh(v); }
+   for(int k=0;k<3;k++)
+     { z[k]=m.deep[474+k*7+6]; for(int h=0;h<6;h++) z[k]+=m.deep[474+k*7+h]*b[h]; }
+   ICTStatSoftmax(z,1,ref p);
+   for(int k=0;k<3;k++) d3[k]=p[k]-(s.label==k ? 1.0 : 0.0);
+   for(int h=0;h<6;h++)
+     { double d=0; for(int k=0;k<3;k++) d+=d3[k]*m.deep[474+k*7+h]; d2[h]=d*(1-b[h]*b[h]); }
+   for(int h=0;h<12;h++)
+     { double d=0; for(int k=0;k<6;k++) d+=d2[k]*m.deep[396+k*13+h]; d1[h]=d*(1-a[h]*a[h]); }
+   for(int k=0;k<3;k++)
+     {
+      for(int h=0;h<6;h++) m.deep[474+k*7+h]-=rate*(d3[k]*b[h]+decay*m.deep[474+k*7+h]);
+      m.deep[474+k*7+6]-=rate*d3[k];
+     }
+   for(int h=0;h<6;h++)
+     {
+      for(int f=0;f<12;f++) m.deep[396+h*13+f]-=rate*(d2[h]*a[f]+decay*m.deep[396+h*13+f]);
+      m.deep[396+h*13+12]-=rate*d2[h];
+     }
+   for(int h=0;h<12;h++)
+     {
+      for(int f=0;f<32;f++) m.deep[h*33+f]-=rate*(d1[h]*x[f]+decay*m.deep[h*33+f]);
+      m.deep[h*33+32]-=rate*d1[h];
+     }
+  }
+public static bool ICTStatTrainStep(SICTStatModel m,SICTStatSample[] samples,SICTStatSnapshot s) {
+   if(m.train_n<1 || m.epoch>=ICT_STAT_EPOCHS) return false;
+
+   for(int b=0;b<16 && m.epoch<ICT_STAT_EPOCHS;b++)
+     {
+      int i=(m.cursor+m.epoch*67)%m.train_n;
+      ICTStatTrainSample(m,samples[i],m.epoch<ICT_STAT_DEEP_EPOCHS);
+      if(++m.cursor>=m.train_n) { m.cursor=0; m.epoch++; }
+     }
+   s.progress=(m.epoch*m.train_n+m.cursor)*100/(ICT_STAT_EPOCHS*m.train_n);
+   return m.epoch<ICT_STAT_EPOCHS;
+  }
+public static double ICTStatTemperature(SICTStatModel m,SICTStatSample[] samples,bool deep) {
+   double[] temperatures = new double[] {0.75,1.0,1.5,2.0,3.0};
+   double best=1,best_loss=1.0e100;
+   for(int t=0;t<5;t++)
+     {
+      double loss=0; double[] p=InitArray<double>(3);
+      for(int i=m.cal_start;i<m.cal_start+m.cal_n;i++)
+        {
+         ICTStatForward(m,samples[i],deep,temperatures[t],ref p);
+         loss-=MathLog(MathMax(0.000000001,p[samples[i].label]));
+        }
+      if(loss<best_loss) { best_loss=loss; best=temperatures[t]; }
+     }
+   return best;
+  }
+public static double ICTStatBrier(double[] p,int label) {
+   double result=0;
+   for(int k=0;k<3;k++) { double d=p[k]-(k==label ? 1.0 : 0.0); result+=d*d; }
+   return result;
+  }
+public static int ICTStatArgmax(double[] p) { int best=0; for(int k=1;k<3;k++) if(p[k]>p[best]) best=k; return best; }
+public static bool ICTStatFinish(SICTStatModel m,SICTStatSample[] samples,SICTStatSnapshot s) {
+   if(m.epoch<ICT_STAT_EPOCHS || m.test_n<1) return false;
+   int[] counts=InitArray<int>(3); ArrayInitialize(counts,0);
+   for(int i=m.cal_start;i<m.cal_start+m.cal_n;i++) counts[samples[i].label]++;
+   m.calibrated=counts[0]>=5 && counts[1]>=5 && counts[2]>=5;
+   if(m.calibrated)
+     { m.lr_temperature=ICTStatTemperature(m,samples,false); m.deep_temperature=ICTStatTemperature(m,samples,true); }
+   s.brier_ml=0; s.brier_dl=0; s.brier_combined=0; s.brier_baseline=0;
+   s.accuracy=0; s.baseline_accuracy=0;
+   ArrayInitialize(s.pattern_n,0); ArrayInitialize(s.pattern_hits,0);
+   for(int i=m.test_start;i<m.test_start+m.test_n;i++)
+     {
+      double[] ml=InitArray<double>(3); double[] dl=InitArray<double>(3); double[] both=InitArray<double>(3);
+      ICTStatForward(m,samples[i],false,m.lr_temperature,ref ml);
+      ICTStatForward(m,samples[i],true,m.deep_temperature,ref dl);
+      for(int k=0;k<3;k++) both[k]=(ml[k]+dl[k])/2.0;
+      s.brier_ml+=ICTStatBrier(ml,samples[i].label)/m.test_n;
+      s.brier_dl+=ICTStatBrier(dl,samples[i].label)/m.test_n;
+      s.brier_combined+=ICTStatBrier(both,samples[i].label)/m.test_n;
+      s.brier_baseline+=ICTStatBrier(m.prior,samples[i].label)/m.test_n;
+      if(ICTStatArgmax(both)==samples[i].label) s.accuracy+=1.0/m.test_n;
+      if(ICTStatArgmax(m.prior)==samples[i].label) s.baseline_accuracy+=1.0/m.test_n;
+      for(int k=0;k<8;k++)
+         if((samples[i].mask & (1<<k))!=0)
+           { s.pattern_n[k]++; if(samples[i].label==k%2) s.pattern_hits[k]++; }
+     }
+   for(int k=0;k<ICT_STAT_LR_WEIGHTS;k++) if(!MathIsValidNumber(m.lr[k])) return false;
+   for(int k=0;k<ICT_STAT_DNN_WEIGHTS;k++) if(!MathIsValidNumber(m.deep[k])) return false;
+   if(!MathIsValidNumber(s.brier_combined) || !MathIsValidNumber(s.brier_baseline)) return false;
+   m.fitted=true; s.ready=true; s.calibrated=m.calibrated; s.progress=100;
+   s.train_end=m.train_end; s.test_end=m.test_end;
+   s.beats_baseline=s.brier_combined<s.brier_baseline;
+   s.status=s.beats_baseline ? "VALIDATION_BETTER" : "BASELINE_NOT_BEATEN";
+   s.reason=s.beats_baseline ? "Brier thấp hơn tần suất train trên đoạn kiểm định" : "Chưa vượt tần suất train trên đoạn kiểm định";
+   return true;
+  }
+public static bool ICTStatPredict(SICTStatModel m,SICTStatSample sample,SICTStatSnapshot s) {
+   s.ready=false;
+   if(!m.fitted) return false;
+   for(int k=0;k<32;k++) if(!MathIsValidNumber(sample.x[k])) return false;
+   ICTStatForward(m,sample,false,m.lr_temperature,ref s.ml);
+   ICTStatForward(m,sample,true,m.deep_temperature,ref s.dl);
+   double sum=0;
+   for(int k=0;k<3;k++)
+     {
+      s.combined[k]=(s.ml[k]+s.dl[k])/2.0;
+      if(!MathIsValidNumber(s.combined[k]) || s.combined[k]<0 || s.combined[k]>1) return false;
+      sum+=s.combined[k];
+     }
+   if(MathAbs(sum-1)>0.000001) return false;
+   s.mask=sample.mask; s.asof=sample.asof; s.ready=true;
+   return true;
+  }
+public static void ICTStatWilson(int hits,int n,ref double low,ref double high) {
+   low=0; high=1;
+   if(n<1 || hits<0 || hits>n) return;
+   double p=(double)hits/n,z=1.96,den=1+z*z/n;
+   double center=(p+z*z/(2*n))/den;
+   double half=z*MathSqrt(p*(1-p)/n+z*z/(4.0*n*n))/den;
+   low=MathMax(0,center-half); high=MathMin(1,center+half);
+  }
+
+
+
+public class SICTStatLiquidityPair {
+public bool valid;
+public string bsl_id=string.Empty;
+public string ssl_id=string.Empty;
+public double bsl;
+public double ssl;
+public double spot;
+public long asof;
+public long bsl_available;
+public long ssl_available;
+public long trend_closed_at;
+public int bsl_tf;
+public int ssl_tf;
+public int trend_bias;
+public int htf_bias;
+}
+
+public class SICTStatLiquidityAudit {
+public int attempted;
+public int missing_pair;
+public int missing_trend;
+public int ambiguous;
+public int censored;
+public int eligible;
+public int[] test_classes=InitArray<int>(3);
+public bool validation_pass;
+public double brier_geometry;
+public double log_loss;
+public double ece;
+}
+
+public class SICTStatLiquidityRecord {
+public SICTStatLiquidityPair pair=new SICTStatLiquidityPair();
+public long label_end;
+public int label;
+}
+
+
+public static bool ICTStatLiquidityValidPair(SICTStatLiquidityPair p) {
+   return p.valid && p.asof>0 && MathIsValidNumber(p.spot) && MathIsValidNumber(p.bsl) && MathIsValidNumber(p.ssl) &&
+      p.ssl>0 && p.ssl<p.spot && p.bsl>p.spot && p.bsl_available>0 && p.ssl_available>0 &&
+      p.bsl_available<=p.asof && p.ssl_available<=p.asof;
+  }
+public static bool ICTStatLiquiditySamePair(SICTStatLiquidityPair a,SICTStatLiquidityPair b) {
+   if(a.valid!=b.valid) return false;
+   if(!a.valid) return true;
+   return a.asof==b.asof && a.bsl_id==b.bsl_id && a.ssl_id==b.ssl_id && a.bsl==b.bsl && a.ssl==b.ssl &&
+      a.bsl_tf==b.bsl_tf && a.ssl_tf==b.ssl_tf;
+  }
+
+public static bool ICTStatLiquidityPristine(MqlRates[] r,int count,int seconds,SICTRangeLevel l,long asof) {
+   if(count<1 || count>ArraySize(r) || seconds<=0 || ArrayGetAsSeries(r) ||
+      !ICTRangeLevelUntouched(l,asof) || r[count-1].time+seconds!=asof || l.available_at<r[0].time)
+      return false;
+   if(l.available_at==asof) return true;
+   int first=ICTRateIndex(r,count,l.available_at);
+   if(first<0) return false;
+   for(int j=first;j<count;j++)
+     {
+      if(!SRMPValidDetectorBar(r[j]) || (j>first && r[j].time!=r[j-1].time+seconds)) return false;
+      if(l.side>0 ? r[j].high>=l.price : r[j].low<=l.price) return false;
+     }
+   return true;
+  }
+
+public static bool ICTStatLiquiditySelectPair(SICTRangeSnapshot s,MqlRates[] r,int count,SICTStatLiquidityPair p,bool show_irl=true,bool show_erl=true) {
+   ZeroMemory(p);
+   int seconds=PeriodSeconds(s.ltf);
+   if(!s.valid || !s.range.valid || s.schema!=ICT_RANGE_SCHEMA || count<1 || count>ArraySize(r) ||
+      seconds<=0 || s.as_of!=r[count-1].time+seconds || !SRMPValidDetectorBar(r[count-1])) return false;
+   p.spot=r[count-1].close; p.asof=s.as_of; p.htf_bias=s.htf_bias;
+   for(int i=0;i<s.level_count && i<ICT_RANGE_LEVELS;i++)
+     {
+      SICTRangeLevel l=s.levels[i];
+      bool external=l.membership==IR_BOUNDARY || l.membership==IR_OUTSIDE;
+      if(l.range_id!=s.range.id || PeriodSeconds(l.timeframe)<=0 ||
+         (external ? !show_erl : l.membership!=IR_INTERNAL || !show_irl) ||
+         !ICTStatLiquidityPristine(r,count,seconds,l,s.as_of)) continue;
+      if(l.side>0 && l.price>p.spot && (p.bsl<=0 || l.price<p.bsl ||
+         (l.price==p.bsl && PeriodSeconds(l.timeframe)>PeriodSeconds(p.bsl_tf))))
+        { p.bsl=l.price; p.bsl_id=l.id; p.bsl_tf=l.timeframe; p.bsl_available=l.available_at; }
+      if(l.side<0 && l.price<p.spot && (p.ssl<=0 || l.price>p.ssl ||
+         (l.price==p.ssl && PeriodSeconds(l.timeframe)>PeriodSeconds(p.ssl_tf))))
+        { p.ssl=l.price; p.ssl_id=l.id; p.ssl_tf=l.timeframe; p.ssl_available=l.available_at; }
+     }
+   p.valid=p.bsl_id!="" && p.ssl_id!="" && p.bsl>p.spot && p.ssl>0 && p.ssl<p.spot;
+   return p.valid;
+  }
+
+public static bool ICTStatLiquidityFeatures(MqlRates[] r,int i,int seconds,double point,SICTStatLiquidityPair p,SICTStatSample s) {
+   ZeroMemory(s);
+   if(!ICTStatLiquidityValidPair(p) || seconds<=0 || i<32 || i>=ArraySize(r) || p.asof!=r[i].time+seconds ||
+      p.spot!=r[i].close || p.ssl<=0 || p.ssl>=p.spot || p.bsl<=p.spot ||
+      p.trend_closed_at<=0 || p.trend_closed_at>p.asof || p.trend_bias < -1 || p.trend_bias>1)
+      return false;
+   for(int j=i-32;j<=i;j++)
+      if(!SRMPValidDetectorBar(r[j]) || (j>i-32 && r[j].time!=r[j-1].time+seconds)) return false;
+   if(!ICTStatFeatures(r,i,point,s)) return false;
+   double atr=ICTStatATR(r,i),up=p.bsl-p.spot,down=p.spot-p.ssl;
+   s.x[20]=up/atr; s.x[21]=down/atr; s.x[22]=down/(up+down);
+   s.x[23]=p.trend_bias; s.x[24]=p.htf_bias;
+   s.x[25]=MathLog(1.0+(double)PeriodSeconds(p.bsl_tf)/seconds);
+   s.x[26]=MathLog(1.0+(double)PeriodSeconds(p.ssl_tf)/seconds);
+   s.x[28]=MathLog(1.0+(double)(p.asof-p.bsl_available)/seconds);
+   s.x[29]=MathLog(1.0+(double)(p.asof-p.ssl_available)/seconds);
+   s.x[30]=(r[i].close-r[i-3].close)/atr; s.x[31]=(r[i].close-r[i-12].close)/atr;
+   s.mask=0; s.asof=p.asof;
+   for(int k=0;k<32;k++) if(!MathIsValidNumber(s.x[k])) return false;
+   return true;
+  }
+
+public static int ICTStatLiquidityLabel(MqlRates[] r,int count,int i,int horizon,int seconds,SICTStatLiquidityPair p,ref long label_end) {
+   label_end=0;
+   if(!ICTStatLiquidityValidPair(p) || ArrayGetAsSeries(r) || seconds<=0 || horizon<1 || count>ArraySize(r) || i<0 || i+horizon>=count ||
+      p.asof!=r[i].time+seconds || p.ssl<=0 || p.ssl>=p.spot || p.bsl<=p.spot) return -1;
+   for(int j=i+1;j<=i+horizon;j++)
+     {
+      if(!SRMPValidDetectorBar(r[j]) || r[j].time!=r[j-1].time+seconds) return -1;
+      label_end=r[j].time+seconds;
+
+
+      if(r[j].open>=p.bsl) return 0;
+      if(r[j].open<=p.ssl) return 1;
+      bool upper=r[j].high>=p.bsl,lower=r[j].low<=p.ssl;
+      if(upper && lower) return -2;
+      if(upper) return 0;
+      if(lower) return 1;
+     }
+   return 2;
+  }
+
+public static void ICTStatLiquidityGeometry(SICTStatSample s,double timeout,ref double[] p) {
+   double neutral=ICTStatClip(timeout,0,1),upper=ICTStatClip(s.x[22],0,1);
+   p[0]=(1-neutral)*upper; p[1]=(1-neutral)*(1-upper); p[2]=neutral;
+  }
+
+public static bool ICTStatLiquidityInSupport(SICTStatModel m,SICTStatSample s) {
+   if(!m.fitted) return false;
+   for(int f=0;f<32;f++)
+      if(!MathIsValidNumber(s.x[f]) || !MathIsValidNumber(m.mean[f]) ||
+         !MathIsValidNumber(m.scale[f]) || m.scale[f]<=0 || MathAbs((s.x[f]-m.mean[f])/m.scale[f])>5)
+         return false;
+   return true;
+  }
+
+public static bool ICTStatLiquidityAuditModel(SICTStatModel m,SICTStatSample[] samples,SICTStatSnapshot s,SICTStatLiquidityAudit a) {
+   a.validation_pass=false; a.brier_geometry=0; a.log_loss=0; a.ece=0;
+   ArrayInitialize(a.test_classes,0);
+   if(!m.fitted || !s.ready || m.test_n<1 || m.test_start+m.test_n>ArraySize(samples)) return false;
+   int[] bins=InitArray<int>(10); double[] confidence=InitArray<double>(10); double[] hits=InitArray<double>(10);
+   ArrayInitialize(bins,0); ArrayInitialize(confidence,0); ArrayInitialize(hits,0);
+   for(int i=m.test_start;i<m.test_start+m.test_n;i++)
+     {
+      double[] ml=InitArray<double>(3); double[] dl=InitArray<double>(3); double[] both=InitArray<double>(3); double[] geometry=InitArray<double>(3);
+      ICTStatForward(m,samples[i],false,m.lr_temperature,ref ml);
+      ICTStatForward(m,samples[i],true,m.deep_temperature,ref dl);
+      for(int k=0;k<3;k++) both[k]=(ml[k]+dl[k])/2.0;
+      ICTStatLiquidityGeometry(samples[i],m.prior[2],ref geometry);
+      a.brier_geometry+=ICTStatBrier(geometry,samples[i].label)/m.test_n;
+      a.log_loss-=MathLog(MathMax(1e-12,both[samples[i].label]))/m.test_n;
+      a.test_classes[samples[i].label]++;
+      int best=ICTStatArgmax(both),bin=(int)MathMin(9,(int)(both[best]*10));
+      bins[bin]++; confidence[bin]+=both[best]; hits[bin]+=(best==samples[i].label ? 1.0 : 0.0);
+     }
+   for(int b=0;b<10;b++) if(bins[b]>0) a.ece+=MathAbs(confidence[b]-hits[b])/m.test_n;
+   a.validation_pass=s.calibrated && s.beats_baseline && s.brier_combined<a.brier_geometry &&
+      a.test_classes[0]>=5 && a.test_classes[1]>=5 && a.test_classes[2]>=5;
+   return a.validation_pass;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+public const int ICT_FOCUS_WAIT=0;
+public const int ICT_FOCUS_MSS=1;
+public const int ICT_FOCUS_BOS=2;
+public const int ICT_FOCUS_WEAK_BREAK=3;
+public const int ICT_FOCUS_EXPIRED=4;
+public const int ICT_FOCUS_INVALIDATED=5;
+public const int ICT_FOCUS_NO_SWING=6;
+public const int ICT_FOCUS_PREBROKEN=7;
+
+public class SICTSweepFocusConfig {
+public int left;
+public int right;
+public int max_bars;
+public bool require_displacement;
+public double buffer_ticks;
+public double body_atr;
+public double body_fraction;
+}
+
+public class SICTSweepFocus {
+public bool valid;
+public bool forecast_ready;
+public bool forecast_calibrated;
+public bool h1_ready;
+public SICTRangeLiquidityEvent evt=new SICTRangeLiquidityEvent();
+public int status;
+public long anchor_time;
+public long pivot_time;
+public long mss_time;
+public long mss_confirmed_at;
+public long forecast_asof;
+public long h1_closed_at;
+public double pivot_level;
+public double mss_close;
+public double body_ratio;
+public double atr;
+public double[] ml=InitArray<double>(3);
+public double[] dl=InitArray<double>(3);
+public int prior_bias;
+public int closed_after;
+public int h1_bias;
+public string forecast_reason=string.Empty;
+}
+
+
+public static bool ICTSweepFocusEligible(SICTRangeLiquidityEvent e,long asof,long oldest,int tf,bool show_irl,bool show_erl) {
+   bool external=e.membership==IR_BOUNDARY || e.membership==IR_OUTSIDE;
+   return e.type==IR_EVENT_LIQUIDITY_SWEEP && (e.side==1 || e.side==-1) &&
+      e.id!="" && e.event_tf==tf && e.bar_time>=oldest && e.wick_time>0 &&
+      e.wick_time<=e.bar_time && e.confirmed_at>e.bar_time && e.confirmed_at<=asof &&
+      MathIsValidNumber(e.level) && MathIsValidNumber(e.wick) && MathIsValidNumber(e.close) &&
+      e.level>0 && (e.wick-e.level)*e.side>0 &&
+      (external ? show_erl : e.membership==IR_INTERNAL && show_irl);
+  }
+
+
+
+public static bool ICTSweepFocusH1Context(MqlRates[] bars,int count,int left,int right,SICTSweepFocus v) {
+   v.h1_ready=false; v.h1_bias=0; v.h1_closed_at=0;
+   if(!v.valid || v.evt.confirmed_at<=0 || count<1 || count>ArraySize(bars) ||
+      ArrayGetAsSeries(bars)) return false;
+   int n=ICTClosedPrefix(bars,count,PERIOD_H1,v.evt.confirmed_at);
+   if(n<ICT_SWEEP_FOCUS_H1_BARS) return false;
+   long closed=ICTBarClose(PERIOD_H1,bars[n-1].time);
+
+   if(closed<=0 || v.evt.confirmed_at-closed>=PeriodSeconds(PERIOD_H1)) return false;
+   MqlRates[] window=InitArray<MqlRates>(0); ArrayResize(ref window,ICT_SWEEP_FOCUS_H1_BARS);
+   if(ArrayCopy(ref window,bars,0,n-ICT_SWEEP_FOCUS_H1_BARS,ICT_SWEEP_FOCUS_H1_BARS)!=ICT_SWEEP_FOCUS_H1_BARS)
+      return false;
+   SMarketStructure structure=new SMarketStructure();
+   if(!SRMPAnalyzeStructureFromRates(window,ICT_SWEEP_FOCUS_H1_BARS,left,right,structure)) return false;
+   v.h1_ready=true; v.h1_bias=structure.bias; v.h1_closed_at=closed;
+   return true;
+  }
+
+public static bool ICTSweepFocusAlignedH1(SICTSweepFocus v) { return v.valid && v.h1_ready && (v.evt.side==1 || v.evt.side==-1) && v.h1_bias==-v.evt.side; }
+
+public static bool ICTSweepFocusPrefer(SICTSweepFocus candidate,SICTSweepFocus current,bool prefer_h1) {
+   if(!candidate.valid) return false;
+   if(!current.valid) return true;
+   bool aligned=ICTSweepFocusAlignedH1(candidate),other=ICTSweepFocusAlignedH1(current);
+   if(prefer_h1 && aligned!=other) return aligned;
+   if(candidate.evt.confirmed_at!=current.evt.confirmed_at)
+      return candidate.evt.confirmed_at>current.evt.confirmed_at;
+   return PeriodSeconds(candidate.evt.source_tf)>PeriodSeconds(current.evt.source_tf);
+  }
+
+public static bool ICTSweepFocusAnalyze(MqlRates[] r,int count,SICTRangeLiquidityEvent e,long asof,int seconds,double tick,SICTSweepFocusConfig c,SICTSweepFocus v) {
+   ZeroMemory(v); v.evt=e; v.status=ICT_FOCUS_NO_SWING;
+   if(seconds<=0 || !MathIsValidNumber(tick) || tick<=0 ||
+      c.left<1 || c.right<1 || c.max_bars<1 || c.max_bars>100 ||
+      !MathIsValidNumber(c.buffer_ticks) || c.buffer_ticks<0 ||
+      !MathIsValidNumber(c.body_atr) || c.body_atr<=0 ||
+      !MathIsValidNumber(c.body_fraction) || c.body_fraction<=0 || c.body_fraction>1 ||
+      !ICTSweepFocusEligible(e,asof,1,e.event_tf,true,true) ||
+      count<1 || count>ArraySize(r) || ArrayGetAsSeries(r)) return false;
+   int wick=-1,confirmation=-1,last=-1;
+   for(int i=0;i<count;i++)
+     {
+      if(r[i].time+seconds>asof) break;
+      last=i;
+      if(r[i].time==e.wick_time) wick=i;
+      if(r[i].time==e.bar_time) confirmation=i;
+     }
+   if(wick<15 || confirmation<wick || last<confirmation || !SRMPValidDetectorRates(r,last+1) ||
+      e.confirmed_at<r[confirmation].time+seconds) return false;
+
+   double actual_wick=(e.side>0 ? r[wick].high : r[wick].low);
+   if(MathAbs(actual_wick-e.wick)>tick*0.51 ||
+      MathAbs(r[confirmation].close-e.close)>tick*0.51 ||
+      (e.close-e.level)*e.side>=0) return false;
+   v.valid=true; v.atr=ICTStatATR(r,wick);
+   v.anchor_time=r[(int)MathMax(0,wick-20)].time;
+
+
+   double tolerance=MathMax(tick*2,v.atr*0.02);
+   for(int p=wick-1;p>=MathMax(0,wick-80);p--)
+      if(MathAbs((e.side>0 ? r[p].high : r[p].low)-e.level)<=tolerance)
+        { v.anchor_time=r[p].time; break; }
+
+
+   int pivot=-1;
+   for(int p=wick-c.right-1;p>=c.left;p--)
+      if(SRMPConfirmedSwingAt(r,wick,p,c.left,c.right,e.side<0)) { pivot=p; break; }
+   if(pivot<0) return true;
+   v.pivot_time=r[pivot].time; v.pivot_level=(e.side>0 ? r[pivot].low : r[pivot].high);
+   SMarketStructure structure=new SMarketStructure();
+   if(SRMPAnalyzeStructureFromRates(r,wick,c.left,c.right,structure)) v.prior_bias=structure.bias;
+   double buffer=c.buffer_ticks*tick;
+   for(int i=pivot+c.right+1;i<=confirmation;i++)
+      if((r[i].close-v.pivot_level)*(-e.side)>buffer)
+        { v.status=ICT_FOCUS_PREBROKEN; return true; }
+   v.status=ICT_FOCUS_WAIT;
+   int end=(int)MathMin(last,confirmation+c.max_bars);
+   for(int i=confirmation+1;i<=end;i++)
+     {
+      v.closed_after=i-confirmation;
+      if((r[i].close-e.wick)*e.side>buffer)
+        { v.status=ICT_FOCUS_INVALIDATED; return true; }
+      double beyond=(r[i].close-v.pivot_level)*(-e.side);
+      double previous=(r[i-1].close-v.pivot_level)*(-e.side);
+      if(beyond<=buffer || previous>buffer) continue;
+      double atr=ICTStatATR(r,i-1),body=MathAbs(r[i].close-r[i].open),range=r[i].high-r[i].low;
+      bool directional=(r[i].close-r[i].open)*(-e.side)>0;
+      bool displacement=atr>0 && range>0 && directional && body>=c.body_atr*atr && body/range>=c.body_fraction;
+      if(c.require_displacement && !displacement) { v.status=ICT_FOCUS_WEAK_BREAK; continue; }
+      v.body_ratio=(atr>0 ? body/atr : 0); v.mss_time=r[i].time;
+      v.mss_confirmed_at=r[i].time+seconds; v.mss_close=r[i].close;
+
+      v.status=(v.prior_bias==e.side ? ICT_FOCUS_MSS : ICT_FOCUS_BOS); return true;
+     }
+   if(last-confirmation>=c.max_bars && v.status==ICT_FOCUS_WAIT) v.status=ICT_FOCUS_EXPIRED;
+   return true;
+  }
+
+public static bool ICTSweepFocusForecast(MqlRates[] r,int count,double point,SICTStatModel model,int model_tf,SICTSweepFocus v) {
+   v.forecast_ready=false; v.forecast_calibrated=false;
+   ArrayInitialize(v.ml,0); ArrayInitialize(v.dl,0);
+   if(!v.valid) { v.forecast_reason="Chưa có sweep hợp lệ"; return false; }
+   if(model_tf!=v.evt.event_tf) { v.forecast_reason="Khung DL khác khung nến sweep"; return false; }
+   if(!model.fitted) { v.forecast_reason="Đang chờ mô hình DL học xong"; return false; }
+
+
+   if(model.train_end<=0 || model.cal_end<model.train_end ||
+      model.cal_end>=v.evt.bar_time)
+     { v.forecast_reason="Train/hiệu chỉnh chưa kết thúc trước sweep"; return false; }
+   int index=-1;
+   for(int i=0;i<count && i<ArraySize(r);i++) if(r[i].time==v.evt.bar_time) { index=i; break; }
+   SICTStatSample sample=new SICTStatSample(); SICTStatSnapshot prediction=new SICTStatSnapshot();
+   if(index<32 || !ICTStatFeatures(r,index,point,sample) || !ICTStatPredict(model,sample,prediction))
+     { v.forecast_reason="Thiếu cửa sổ giá tại nến xác nhận sweep"; return false; }
+   for(int k=0;k<3;k++) { v.ml[k]=prediction.ml[k]; v.dl[k]=prediction.dl[k]; }
+   v.forecast_ready=true; v.forecast_calibrated=model.calibrated;
+   v.forecast_asof=v.evt.confirmed_at; v.forecast_reason="Dự báo hướng sau nến xác nhận, không phải P(TP trước SL)";
+   return true;
+  }
+
+
+
+
+
+
+
+
+
+public const int ICT_A_PATH=0;
+public const int ICT_A_CANDLE=1;
+public const int ICT_A_LIQUIDITY=2;
+public const int ICT_A_ZONES=3;
+public const int ICT_A_SMT=4;
+public const int ICT_A_DEEP=5;
+
+public class SICTAnalyticalConfig {
+public double minimum_score;
+public int minimum_groups;
+public int minimum_supporters;
+public int event_window;
+public bool require_deep;
+}
+
+public class SICTAnalyticalContext {
+public string symbol=string.Empty;
+public bool valid;
+public int ltf;
+public int mtf;
+public int htf;
+public long asof;
+public long ltf_closed;
+public long mtf_closed;
+public long htf_closed;
+public int htf_bias;
+public int mtf_bias;
+}
+
+public class SICTAnalyticalVotes {
+public bool[] available=InitArray<bool>(ICT_ANALYSIS_GROUPS);
+public double[] value=InitArray<double>(ICT_ANALYSIS_GROUPS);
+}
+
+public class SICTAnalyticalResult {
+public bool ready;
+public bool signal;
+public bool deep_used;
+public bool context_aligned;
+public bool experimental;
+public int direction;
+public int groups;
+public int supporters;
+public int opponents;
+public double score;
+public double mean;
+public long asof;
+public string reason=string.Empty;
+}
+
+public static void ICTAnalyticalDefaults(SICTAnalyticalConfig c) { c.minimum_score=60; c.minimum_groups=3; c.minimum_supporters=2; c.event_window=12; c.require_deep=false; }
+public static bool ICTAnalyticalValidConfig(SICTAnalyticalConfig c) {
+   return MathIsValidNumber(c.minimum_score) && c.minimum_score>50 && c.minimum_score<=95 &&
+      c.minimum_groups>=2 && c.minimum_groups<=ICT_ANALYSIS_GROUPS &&
+      c.minimum_supporters>=2 && c.minimum_supporters<=c.minimum_groups && c.event_window>=1 && c.event_window<=60;
+  }
+public static bool ICTAnalyticalContextReady(SICTAnalyticalContext c) {
+   return c.valid && c.symbol!="" && c.asof>0 && c.ltf!=PERIOD_CURRENT &&
+      PeriodSeconds(c.ltf)>0 && PeriodSeconds(c.ltf)<PeriodSeconds(c.mtf) && PeriodSeconds(c.mtf)<PeriodSeconds(c.htf) &&
+      c.ltf_closed==c.asof && c.mtf_closed>0 && c.mtf_closed<=c.asof && c.htf_closed>0 && c.htf_closed<=c.asof &&
+      (c.htf_bias==1 || c.htf_bias==-1) && c.mtf_bias==c.htf_bias;
+  }
+public static bool ICTAnalyticalEvaluate(SICTAnalyticalConfig c,SICTAnalyticalContext context,SICTAnalyticalVotes votes,SICTAnalyticalResult s) {
+   ZeroMemory(s); s.asof=context.asof;
+   if(!ICTAnalyticalValidConfig(c)) { s.reason="Cấu hình điểm / số nhóm không hợp lệ"; return false; }
+   if(!ICTAnalyticalContextReady(context)) { s.reason="Chờ bối cảnh HTF / MTF đồng thuận và đủ nến đóng"; return false; }
+   s.direction=context.htf_bias;
+   for(int i=0;i<ICT_ANALYSIS_GROUPS;i++)
+     {
+      if(!votes.available[i]) continue;
+      double v=votes.value[i];
+      if(!MathIsValidNumber(v) || MathAbs(v)>1)
+        { s.reason="Bằng chứng ngoài miền số hợp lệ"; return false; }
+      s.mean+=v; s.groups++;
+      if(v*s.direction>=0.2) s.supporters++;
+      if(v*s.direction<=-0.2) s.opponents++;
+     }
+   s.deep_used=votes.available[ICT_A_DEEP];
+   if(s.groups<c.minimum_groups) { s.reason="Chưa đủ nhóm dữ liệu; không thay dữ liệu thiếu bằng điểm thuận"; return false; }
+   s.mean/=s.groups; s.score=50.0*(1.0+s.direction*s.mean); s.ready=true;
+   if(c.require_deep && !s.deep_used) { s.reason="Chờ DNN đã hiệu chỉnh, vượt đối chứng và khớp nến LTF"; return false; }
+   if(s.supporters<c.minimum_supporters) { s.reason="Chưa đủ nhóm bằng chứng ủng hộ"; return false; }
+   if(s.score+1e-9<c.minimum_score) { s.reason="Điểm trung bình chưa đạt ngưỡng phân tích sớm"; return false; }
+   s.signal=true; s.reason="Các nhóm bằng chứng đạt đồng thuận theo bối cảnh đa khung"; return true;
+  }
+
+public static bool ICTAnalyticalPriceVotes(MqlRates[] r,int tf,long asof,double point,SICTAnalyticalVotes v,ref double atr) {
+   atr=0;
+   int n=ICTClosedPrefix(r,ArraySize(r),tf,asof);
+   if(n<33 || !SRMPValidDetectorRates(r,n) || ICTBarClose(tf,r[n-1].time)!=asof || point<=0) return false;
+   int i=n-1; atr=ICTPriorATR(r,i);
+   if(!MathIsValidNumber(atr) || atr<=0) return false;
+   double travel=0;
+   for(int j=i-11;j<=i;j++) travel+=MathAbs(r[j].close-r[j-1].close);
+   double short_move=ICTStatClip((r[i].close-r[i-3].close)/(1.5*atr),-1,1);
+   double long_move=ICTStatClip((r[i].close-r[i-12].close)/(3.0*atr),-1,1);
+   double efficiency=(travel>0 ? (r[i].close-r[i-12].close)/travel : 0);
+   v.value[ICT_A_PATH]=(short_move+long_move+efficiency)/3.0; v.available[ICT_A_PATH]=true;
+   MqlRates bar=r[i]; double width=bar.high-bar.low;
+   double body=ICTStatClip((bar.close-bar.open)/atr,-1,1);
+   double location=(width>0 ? (2*bar.close-bar.high-bar.low)/width : 0);
+   double rejection=(width>0 ? (MathMin(bar.open,bar.close)-bar.low-bar.high+MathMax(bar.open,bar.close))/width : 0);
+   int mask=ICTStatPatternMask(r,i),patterns=0; double pattern=0;
+   for(int k=0;k<8;k++) if((mask & (1<<k))!=0) { pattern+=(k%2==0 ? 1 : -1); patterns++; }
+   if(patterns>0) pattern/=patterns;
+   v.value[ICT_A_CANDLE]=(body+location+rejection+pattern)/4.0; v.available[ICT_A_CANDLE]=true;
+   return true;
+  }
+
+public static void ICTAnalyticalLiquidityVote(SICTRangeSnapshot r,string symbol,long asof,int ltf,int window,SICTAnalyticalVotes v) {
+   if(!r.valid || r.symbol!=symbol || r.as_of!=asof || r.ltf!=ltf || window<1 ||
+      r.liquidity_event_count<0 || r.liquidity_event_count>ICT_RANGE_LIQUIDITY_EVENTS) return;
+   v.available[ICT_A_LIQUIDITY]=true; v.value[ICT_A_LIQUIDITY]=0;
+   long latest=0; double sum=0; int count=0;
+   for(int i=0;i<r.liquidity_event_count;i++)
+     {
+      SICTRangeLiquidityEvent e=r.liquidity_events[i];
+      if(e.confirmed_at<=0 || e.confirmed_at>asof || e.confirmed_at<asof-(long)window*PeriodSeconds(ltf) ||
+         (e.side!=1 && e.side!=-1) || e.type==IR_EVENT_NONE) continue;
+      if(e.confirmed_at<latest) continue;
+      if(e.confirmed_at>latest) { latest=e.confirmed_at; sum=0; count=0; }
+      sum+=(e.type==IR_EVENT_LIQUIDITY_SWEEP || e.type==IR_EVENT_FALSE_BREAKOUT ? -e.side : e.side); count++;
+     }
+   if(count>0) v.value[ICT_A_LIQUIDITY]=sum/count*(1.0-(double)(asof-latest)/((window+1.0)*PeriodSeconds(ltf)));
+  }
+
+public static double ICTAnalyticalZoneReaction(MqlRates bar,int direction,double low,double high,double quality,double atr) {
+   if((direction!=1 && direction!=-1) || !MathIsValidNumber(low) || !MathIsValidNumber(high) ||
+      !MathIsValidNumber(quality) || low<=0 || high<=low || atr<=0 ||
+      bar.low>high || bar.high<low || (bar.close-bar.open)*direction<=0 ||
+      (direction>0 ? bar.close<low : bar.close>high)) return 0;
+   double distance=(bar.close<low ? low-bar.close : bar.close>high ? bar.close-high : 0);
+   return (0.5+0.5*ICTStatClip(quality/100.0,0,1))*ICTStatClip(1.0-distance/(2*atr),0,1);
+  }
+public static void ICTAnalyticalRangeZonesVote(SICTRangeSnapshot r,string symbol,long asof,MqlRates bar,double atr,SICTAnalyticalVotes v) {
+   if(!r.valid || r.symbol!=symbol || r.as_of!=asof || r.zone_count<0 || r.zone_count>ICT_RANGE_ZONES) return;
+   double bull=0,bear=0;
+   for(int i=0;i<r.zone_count;i++)
+     {
+      SICTRangeZone z=r.zones[i];
+      if(z.range_id!=r.range.id || z.state>IR_TOUCHED || z.confirmed_at<=0 || z.confirmed_at>bar.time) continue;
+      double score=ICTAnalyticalZoneReaction(bar,z.direction,z.lower,z.upper,z.quality,atr);
+      if(z.direction>0) bull=MathMax(bull,score); else bear=MathMax(bear,score);
+     }
+   v.available[ICT_A_ZONES]=true; v.value[ICT_A_ZONES]=bull-bear;
+  }
+public static void ICTAnalyticalUnifiedVotes(SICTUnifiedSnapshot u,MqlRates bar,double atr,SICTAnalyticalVotes v) {
+   if(!u.valid || u.ob_count<0 || u.ob_count>ICT_SMART_OB_MAX || u.layer_count<0 || u.layer_count>4) return;
+   double bull=MathMax(0,v.value[ICT_A_ZONES]),bear=MathMax(0,-v.value[ICT_A_ZONES]);
+   for(int i=0;i<u.ob_count;i++)
+     {
+      SICTStrongOrderBlock z=u.zones[i];
+      if(!ICTOBActive(z) || !z.hard_gates || z.ob.confirmation_time<=0 || z.ob.confirmation_time>bar.time) continue;
+      double score=ICTAnalyticalZoneReaction(bar,z.ob.direction,z.ob.lower,z.ob.upper,z.current_context_score,atr);
+      if(z.ob.direction>0) bull=MathMax(bull,score); else bear=MathMax(bear,score);
+     }
+   for(int i=0;i<3;i++)
+     {
+      SICTTierSnapshot t=u.tiers[i];
+      if(t.closed_at<=0 || t.closed_at>u.asof) continue;
+      if(t.fvg_ready && t.gap.status<=SRMP_FVG_PARTIALLY_FILLED && ICTBarClose(t.timeframe,t.gap.formed_time)<=bar.time)
+        {
+         double score=ICTAnalyticalZoneReaction(bar,t.gap.direction,t.gap.lower,t.gap.upper,60,atr);
+         if(t.gap.direction>0) bull=MathMax(bull,score); else bear=MathMax(bear,score);
+        }
+      if(t.bpr_ready && t.bpr.confirmed_at>0 && t.bpr.confirmed_at<=bar.time)
+        {
+         double score=ICTAnalyticalZoneReaction(bar,t.bpr.direction,t.bpr.lower,t.bpr.upper,60,atr);
+         if(t.bpr.direction>0) bull=MathMax(bull,score); else bear=MathMax(bear,score);
+        }
+     }
+   v.available[ICT_A_ZONES]=true; v.value[ICT_A_ZONES]=bull-bear;
+   double smt=0; int peers=0;
+   for(int i=0;i<u.layer_count;i++)
+      for(int j=0;j<2;j++)
+        {
+         SICTSMTPeerSnapshot p=u.layers[i].peers[j];
+         string configured=(j==0 ? u.comparison1 : u.comparison2);
+         if(configured=="" || p.comparison!=configured || !p.ready || !p.relation_known ||
+            p.last_close<=0 || p.last_close!=u.layers[i].last_close || p.last_close>u.asof) continue;
+         peers++;
+         if(!p.conflict) smt+=(p.state==ICT_SMT_PEER_BULLISH ? 1 : p.state==ICT_SMT_PEER_BEARISH ? -1 : 0);
+        }
+   if(peers>0) { v.available[ICT_A_SMT]=true; v.value[ICT_A_SMT]=smt/peers; }
+  }
+
+public static bool ICTAnalyticalDeepVote(SICTStatModel m,SICTStatSnapshot s,MqlRates[] rates,int model_tf,int ltf,long asof,double point,SICTAnalyticalVotes v) {
+   v.available[ICT_A_DEEP]=false; v.value[ICT_A_DEEP]=0;
+   if(model_tf!=ltf || !m.fitted || !m.calibrated || !s.ready || !s.calibrated ||
+      s.asof<=0 || ICTBarClose(ltf,s.asof)!=asof || s.horizon<1 ||
+      m.train_end<=0 || m.cal_end<=m.train_end || m.test_end<m.cal_end ||
+      ICTBarClose(ltf,m.test_end)>asof || !MathIsValidNumber(s.brier_dl) || !MathIsValidNumber(s.brier_baseline) ||
+      s.brier_dl<0 || s.brier_dl>=s.brier_baseline) return false;
+   int n=ICTClosedPrefix(rates,ArraySize(rates),ltf,asof);
+   SICTStatSample sample=new SICTStatSample();
+   if(n<33 || rates[n-1].time!=s.asof || !SRMPValidDetectorRates(rates,n) || !ICTStatFeatures(rates,n-1,point,sample)) return false;
+   for(int i=0;i<ICT_STAT_FEATURES;i++)
+      if(!MathIsValidNumber(m.mean[i]) || !MathIsValidNumber(m.scale[i]) || m.scale[i]<=0 ||
+         MathAbs((sample.x[i]-m.mean[i])/m.scale[i])>6) return false;
+   double sum=0;
+   for(int i=0;i<ICT_STAT_CLASSES;i++)
+     { if(!MathIsValidNumber(s.dl[i]) || s.dl[i]<0 || s.dl[i]>1) return false; sum+=s.dl[i]; }
+   if(MathAbs(sum-1)>0.000001) return false;
+   v.value[ICT_A_DEEP]=s.dl[0]-s.dl[1]; v.available[ICT_A_DEEP]=true; return true;
+  }
+
+
+
+public class SICTAnalyticalPolicy {
+public double minimum_score;
+public double minimum_dl_margin;
+public int minimum_groups;
+public int minimum_supporters;
+public bool strict_context;
+public bool require_deep;
+public bool allow_experimental;
+}
+
+public class SICTAnalyticalDeepState {
+public bool ready;
+public bool validated;
+public bool domain_ok;
+public int direction;
+public double[] probability=InitArray<double>(3);
+public double weight;
+public string reason=string.Empty;
+}
+
+public static void ICTAnalyticalPolicyDefaults(SICTAnalyticalPolicy p) {
+   p.minimum_score=55; p.minimum_dl_margin=0.04; p.minimum_groups=2; p.minimum_supporters=1;
+   p.strict_context=false; p.require_deep=true; p.allow_experimental=true;
+  }
+public static bool ICTAnalyticalPolicyValid(SICTAnalyticalPolicy p) {
+   return MathIsValidNumber(p.minimum_score) && p.minimum_score>50 && p.minimum_score<=95 &&
+      MathIsValidNumber(p.minimum_dl_margin) && p.minimum_dl_margin>=0.02 && p.minimum_dl_margin<=0.5 &&
+      p.minimum_groups>=2 && p.minimum_groups<=ICT_ANALYSIS_GROUPS &&
+      p.minimum_supporters>=1 && p.minimum_supporters<=p.minimum_groups;
+  }
+public static bool ICTAnalyticalPriceContextReady(SICTAnalyticalContext c) {
+   return c.valid && c.symbol!="" && c.asof>0 && c.ltf!=PERIOD_CURRENT && PeriodSeconds(c.ltf)>0 &&
+      PeriodSeconds(c.ltf)<PeriodSeconds(c.mtf) && PeriodSeconds(c.mtf)<PeriodSeconds(c.htf) &&
+      c.ltf_closed==c.asof && c.mtf_closed>=0 && c.mtf_closed<=c.asof && c.htf_closed>=0 && c.htf_closed<=c.asof;
+  }
+public static bool ICTAnalyticalDeepEvidence(SICTStatModel m,SICTStatSnapshot s,MqlRates[] rates,int model_tf,int ltf,long asof,double point,SICTAnalyticalDeepState deep,SICTAnalyticalVotes v) {
+   ZeroMemory(deep); v.available[ICT_A_DEEP]=false; v.value[ICT_A_DEEP]=0;
+   deep.reason="Chờ DNN đã học và hiệu chỉnh trên dữ liệu trước nến phân tích";
+   if(model_tf!=ltf) { deep.reason="DNN khác khung LTF"; return false; }
+   if(!m.fitted || !m.calibrated || !s.ready || !s.calibrated || s.asof<=0 ||
+      ICTBarClose(ltf,s.asof)!=asof || s.horizon<1 || m.train_end<=0 || m.cal_end<=m.train_end ||
+      m.test_end<m.cal_end || ICTBarClose(ltf,m.test_end)>asof) return false;
+   int n=ICTClosedPrefix(rates,ArraySize(rates),ltf,asof); SICTStatSample sample=new SICTStatSample();
+   if(n<33 || rates[n-1].time!=s.asof || !SRMPValidDetectorRates(rates,n) || !ICTStatFeatures(rates,n-1,point,sample)) return false;
+   deep.domain_ok=true;
+   for(int i=0;i<ICT_STAT_FEATURES;i++)
+     {
+      if(!MathIsValidNumber(m.mean[i]) || !MathIsValidNumber(m.scale[i]) || m.scale[i]<=0 || !MathIsValidNumber(sample.x[i])) return false;
+      if(MathAbs((sample.x[i]-m.mean[i])/m.scale[i])>6) deep.domain_ok=false;
+     }
+   double sum=0;
+   for(int i=0;i<3;i++)
+     {
+      if(!MathIsValidNumber(s.dl[i]) || s.dl[i]<0 || s.dl[i]>1) return false;
+      deep.probability[i]=s.dl[i]; sum+=s.dl[i];
+     }
+   if(MathAbs(sum-1)>0.000001 || !MathIsValidNumber(s.brier_dl) || !MathIsValidNumber(s.brier_baseline) ||
+      s.brier_dl<0 || s.brier_baseline<=0) return false;
+   deep.validated=deep.domain_ok && s.brier_dl<s.brier_baseline;
+   deep.weight=deep.validated ? 1.0 : 0.35;
+   deep.reason=deep.validated ? "DNN hiệu chỉnh; Brier riêng vượt prior" :
+      !deep.domain_ok ? "DL THAM KHẢO: feature ngoài miền train; giảm trọng số" :
+      "DL THAM KHẢO: chưa vượt prior; giảm trọng số";
+   deep.direction=(s.dl[0]>s.dl[1] ? 1 : s.dl[1]>s.dl[0] ? -1 : 0);
+   if(MathMax(s.dl[0],s.dl[1])<=s.dl[2]) deep.direction=0;
+   deep.ready=true; v.available[ICT_A_DEEP]=true; v.value[ICT_A_DEEP]=s.dl[0]-s.dl[1]; return true;
+  }
+public static bool ICTAnalyticalEvaluateEarly(SICTAnalyticalPolicy p,SICTAnalyticalContext c,SICTAnalyticalVotes v,SICTAnalyticalDeepState deep,SICTAnalyticalResult s) {
+   ZeroMemory(s); s.asof=c.asof; s.context_aligned=ICTAnalyticalContextReady(c);
+   if(!ICTAnalyticalPolicyValid(p)) { s.reason="Cấu hình phân tích DL không hợp lệ"; return false; }
+   if(!ICTAnalyticalPriceContextReady(c)) { s.reason="Chờ dữ liệu LTF đóng hợp lệ"; return false; }
+   if(p.strict_context && !s.context_aligned) { s.reason="Chế độ MTF chặt: chờ HTF / MTF đồng thuận"; return false; }
+   bool use_deep=deep.ready && v.available[ICT_A_DEEP] && (deep.validated || p.allow_experimental);
+   s.deep_used=use_deep; s.experimental=use_deep && !deep.validated;
+   if(p.require_deep && !use_deep) { s.reason=deep.reason; return false; }
+   if(use_deep)
+     {
+      s.direction=deep.direction;
+      if(s.direction==0 || MathAbs(v.value[ICT_A_DEEP])<p.minimum_dl_margin)
+        { s.reason="DNN ưu tiên đi ngang hoặc chênh lệch hướng còn thấp"; return false; }
+     }
+   else
+     {
+      double direction=v.value[ICT_A_PATH]+v.value[ICT_A_CANDLE];
+      s.direction=(direction>0 ? 1 : direction<0 ? -1 : 0);
+      if(s.direction==0) { s.reason="Đường giá chưa tách hướng"; return false; }
+     }
+   double weight_sum=0;
+   for(int i=0;i<ICT_ANALYSIS_GROUPS;i++)
+     {
+      if(!v.available[i] || (i==ICT_A_DEEP && !use_deep)) continue;
+      double value=v.value[i];
+      if(!MathIsValidNumber(value) || MathAbs(value)>1) { s.reason="Bằng chứng ngoài miền số hợp lệ"; return false; }
+
+
+      if(MathAbs(value)<0.025) continue;
+      double weight=(i==ICT_A_DEEP ? deep.weight : 1.0);
+      if(!MathIsValidNumber(weight) || weight<=0 || weight>1) return false;
+      s.mean+=weight*value; weight_sum+=weight; s.groups++;
+      if(value*s.direction>=0.1) s.supporters++;
+      if(value*s.direction<=-0.1) s.opponents++;
+     }
+   if(s.groups<p.minimum_groups || weight_sum<=0) { s.reason="Chờ thêm nhóm có bằng chứng định hướng"; return false; }
+   s.mean/=weight_sum;
+   s.score=50*(1+s.direction*s.mean)+s.direction*(3*c.htf_bias+2*c.mtf_bias);
+   if(s.experimental) s.score=50+(s.score-50)*0.65;
+   s.score=ICTStatClip(s.score,0,100); s.ready=true;
+   if(s.supporters<p.minimum_supporters) { s.reason="Chờ thêm bằng chứng ủng hộ hướng DL"; return false; }
+   if(s.score+1e-9<p.minimum_score) { s.reason="Điểm DL và đường giá chưa đạt ngưỡng"; return false; }
+   s.signal=true; s.reason=s.context_aligned ? "DL và đường giá đủ điểm; bối cảnh đồng thuận" :
+      "DL phân tích sớm; bối cảnh MTF chưa đồng thuận, chưa xác nhận vào lệnh";
+   return true;
+  }
+public static bool ICTAnalyticalStructureAt(MqlRates[] rates,int tf,long asof,int lookback,int left,int right,SMarketStructure structure,ref long closed) {
+   ZeroMemory(structure); closed=0;
+   int n=ICTClosedPrefix(rates,ArraySize(rates),tf,asof);
+   if(n<lookback || lookback<40) return false;
+   MqlRates[] window=InitArray<MqlRates>(0); ArrayResize(ref window,lookback);
+   if(ArrayCopy(ref window,rates,0,n-lookback,lookback)!=lookback || !SRMPValidDetectorRates(window,lookback)) return false;
+   closed=ICTBarClose(tf,window[lookback-1].time);
+   return SRMPAnalyzeStructureFromRates(window,lookback,left,right,structure);
+  }
 
 
 public static string ICTUnifiedSMTDiagnostic(SICTUnifiedSnapshot snapshot,int direction) {
@@ -3618,7 +4903,7 @@ public static void TestLiquidityHistorySeed(int side) {
    MqlRates[] bars=InitArray<MqlRates>(24);
    for(int i=0;i<24;i++) LiquidityFixtureBar(bars[i],1000+i*300,95,97,94,96,side);
    LiquidityFixtureBar(bars[5],2500,96,103,94,99,side);
-   
+
    LiquidityFixtureBar(bars[10],4000,99,104,98,103,side);
    LiquidityFixtureBar(bars[11],4300,103,105,102,104,side);
    SICTRangeLevel pool=new SICTRangeLevel(); ZeroMemory(pool); pool.id="OLD_POOL"; pool.range_id="R";
@@ -3762,7 +5047,7 @@ public static void TestICTSessionLiquidity() {
    ICTSessionFixtureBar(bars[1],Stamp("2026.06.02 01:00"),103,91);
    ICTSessionFixtureBar(bars[2],Stamp("2026.06.02 02:00"),102,88);
    ICTSessionFixtureBar(bars[3],Stamp("2026.06.02 03:00"),100,89);
-   ICTSessionFixtureBar(bars[4],Stamp("2026.06.02 04:00"),999,1); 
+   ICTSessionFixtureBar(bars[4],Stamp("2026.06.02 04:00"),999,1);
    SICTSessionLiquidity result=new SICTSessionLiquidity();
    Check("Asia crossing midnight, broker UTC+2 and closed bars",
       ICTBuildSessionLiquidity(d,Stamp("2026.06.01"),local,broker,bars,3600,Stamp("2026.06.02 02:00"),result) &&
@@ -3803,7 +5088,7 @@ public static void TestICTSessionLiquidity() {
       ICTBuildSessionLiquidity(d,Stamp("2026.06.01"),local,broker,bars,3600,Stamp("2026.06.01 09:00"),result) &&
       result.kind==ICT_SESSION_LONDON && result.high==104 && result.low==87);
 
-   
+
    ArrayResize(ref local,2);
    local[0].from_utc=Stamp("2026.01.01"); local[0].to_utc=Stamp("2026.03.08 07:00"); local[0].minutes_east=-300;
    local[1].from_utc=local[0].to_utc; local[1].to_utc=Stamp("2027.01.01"); local[1].minutes_east=-240;
@@ -3820,7 +5105,7 @@ public static void TestICTSessionLiquidity() {
       !ICTBuildSessionLiquidity(d,Stamp("2026.03.08"),local,broker,bars,1800,Stamp("2026.03.08 09:00"),result) &&
       result.status==ICT_SESSION_AMBIGUOUS_TIME);
 
-   
+
    local[0].to_utc=Stamp("2026.11.01 06:00"); local[0].minutes_east=-240;
    local[1].from_utc=local[0].to_utc; local[1].minutes_east=-300;
    d.start_minute=0; d.end_minute=4*60;
@@ -3890,6 +5175,7 @@ public static void TestICTSignalJournalLive() {
 
 
 
+
 public static void PositionRiskFixture(SICTPositionRiskInput p) {
    ZeroMemory(p); p.ticket=123; p.symbol="TEST"; p.direction=1; p.digits=2;
    p.volume=0.5; p.entry=100; p.stop=98; p.target=105;
@@ -3947,6 +5233,7 @@ public static void TestLivePositionRisk() {
    ICTCalculatePositionRisk(p,10000,10,r);
    Check("profitable trailing stop reports locked money without infinite RR",
       r.stop_valid && r.risk_money==0 && r.locked_money==13 && !r.rr_valid);
+   Check("a profitable SL still has additional equity giveback risk",r.floating==23 && r.remaining_risk_money==10);
    p.gross_at_stop=7; ICTCalculatePositionRisk(p,10000,10,r);
    Check("net break even after fees is distinct from a missing stop",
       r.stop_valid && r.risk_money==0 && r.locked_money==0 && !r.rr_valid);
@@ -3972,6 +5259,81 @@ public static void TestLivePositionRisk() {
       totals.count==2 && totals.risk_money==164 && totals.unknown_stops==0);
    p.gross_at_stop=50; ICTCalculatePositionRisk(p,10000,10,r); ICTAccumulatePositionRisk(r,totals);
    Check("locked stop profit never offsets another position risk",totals.count==3 && totals.risk_money==164);
+   TestLiveAccountRiskBudgets();
+  }
+
+public static void TestLiveAccountRiskBudgets() {
+   Check("entry capital shrinks with equity",ICTConservativeRiskCapital(10000,9000,8000)==8000);
+   Check("floating profit cannot enlarge trade capital above balance",ICTConservativeRiskCapital(10000,9000,11000)==9000);
+   Check("deposits cannot enlarge a fixed protection reference",ICTConservativeRiskCapital(10000,11000,12000)==10000);
+   Check("invalid current equity blocks sizing",ICTConservativeRiskCapital(10000,10000,0)==0);
+   SICTPositionRiskSnapshot s=new SICTPositionRiskSnapshot(); ZeroMemory(s);
+   s.balance=10000; s.equity=10000; s.capital=10000; s.connected=true; s.daily_valid=true; s.daily_opened_valid=true;
+   string reason="";
+   Check("automatic SL TP accepts the exact requested three percent risk",SRMPValidatePositionPlanRisk(-300,600,0,10000,3,2,ref reason));
+   Check("automatic SL TP rejects more than three percent risk",!SRMPValidatePositionPlanRisk(-300.01,700,0,10000,3,2,ref reason));
+   Check("automatic SL TP cannot configure a ceiling above three percent",!SRMPValidatePositionPlanRisk(-25,60,0,10000,3.01,2,ref reason));
+   Check("small entry fits an empty account budget",ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   Check("exact portfolio and projected daily boundary may be reserved",ICTPositionEntryBudgetAllowed(s,100,10000,1,1,ref reason));
+   Check("portfolio boundary cannot be crossed by a new SL",!ICTPositionEntryBudgetAllowed(s,100.01,10000,1,1,ref reason));
+   s.totals.risk_money=80; s.totals.remaining_risk_money=80;
+   Check("individually small trades cannot stack past the aggregate cap",!ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   s.totals.risk_money=65; s.totals.remaining_risk_money=65; s.pending_risk_money=10; s.pending_count=1;
+   Check("pending risk reserves the same budget as open exposure",ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   s.pending_risk_money=10.01;
+   Check("a pending order can consume the final available risk",!ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   s.pending_risk_money=10; s.totals.remaining_risk_money=80;
+   Check("equity giveback also enforces the portfolio cap",!ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   s.totals.risk_money=0; s.totals.remaining_risk_money=487; s.pending_risk_money=0; s.daily_net=500;
+   Check("locked SL profit cannot hide large floating-profit giveback",!ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   s.totals.remaining_risk_money=0; s.daily_net=-90;
+   Check("new risk is reserved before reaching the daily stop",!ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason) && StringFind(reason,"Daily")>=0);
+   s.daily_net=-75;
+   Check("exact remaining daily budget is allowed",ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   s.daily_net=-100;
+   Check("at the daily loss threshold no fresh entry is allowed",!ICTPositionEntryBudgetAllowed(s,1,10000,1,1,ref reason));
+   s.daily_net=0; s.daily_valid=false;
+   Check("missing daily history blocks a live daily budget",!ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   Check("daily budget cannot be disabled to bypass the user limit",!ICTPositionEntryBudgetAllowed(s,25,10000,1,0,ref reason));
+   Check("daily budget cannot exceed the user six percent ceiling",!ICTPositionEntryBudgetAllowed(s,25,10000,10,6.01,ref reason));
+   Check("one trade cannot exceed three percent even under a larger portfolio cap",!ICTPositionEntryBudgetAllowed(s,301,10000,10,6,ref reason));
+   s.daily_valid=true;
+   Check("exact user three percent per trade boundary is supported",ICTPositionEntryBudgetAllowed(s,300,10000,3,6,ref reason));
+   s.daily_net=-300;
+   Check("a second three percent SL can reserve the remaining six percent day budget",ICTPositionEntryBudgetAllowed(s,300,10000,3,6,ref reason));
+   s.daily_net=-300.01;
+   Check("a new SL cannot take the day beyond six percent",!ICTPositionEntryBudgetAllowed(s,300,10000,3,6,ref reason));
+   s.daily_net=0;
+   s.daily_opened_risk_money=575;
+   Check("cumulative daily risk can use exactly the remaining six percent",ICTPositionEntryBudgetAllowed(s,25,10000,3,6,ref reason));
+   s.daily_opened_risk_money=575.01;
+   Check("cumulative daily risk cannot cross six percent",!ICTPositionEntryBudgetAllowed(s,25,10000,3,6,ref reason));
+   s.daily_opened_risk_money=600; s.daily_net=1000;
+   Check("a winning trade never refunds cumulative daily risk",!ICTPositionEntryBudgetAllowed(s,25,10000,3,6,ref reason));
+   Check("loss-only mode still permits an explicit cumulative-risk opt-result_out",ICTPositionEntryBudgetAllowed(s,25,10000,3,6,ref reason,false));
+   s.daily_opened_risk_money=0; s.daily_net=0; s.daily_opened_valid=false;
+   Check("missing original SL history blocks a cumulative daily budget",!ICTPositionEntryBudgetAllowed(s,25,10000,3,6,ref reason));
+   s.daily_opened_valid=true;
+   s.daily_valid=true; s.unknown_pending=1;
+   Check("a pending order without a valued SL blocks entry",!ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   s.unknown_pending=0; s.totals.unknown_stops=1;
+   Check("a manual position without SL blocks entry",!ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   s.totals.unknown_stops=0; s.totals.unknown_floating=1;
+   Check("unknown floating prevents hiding equity giveback",!ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   s.totals.unknown_floating=0; s.selection_errors=1;
+   Check("an incomplete account scan blocks new risk",!ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   s.selection_errors=0; s.symbol_filter="TEST";
+   Check("symbol-only data cannot authorize an account budget",!ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   s.symbol_filter=""; s.connected=false;
+   Check("disconnected data cannot authorize an account budget",!ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   s.connected=true; s.equity=8000;
+   Check("portfolio percentages use reduced current equity",!ICTPositionEntryBudgetAllowed(s,81,10000,1,1,ref reason));
+   s.equity=10000;
+   Check("negative aggregate risk cannot subsidize a new trade",(s.totals.risk_money=-1)<0 && !ICTPositionEntryBudgetAllowed(s,25,10000,1,1,ref reason));
+   s.totals.risk_money=0;
+   Check("negative policy limits do not silently disable safety",!ICTPositionEntryBudgetAllowed(s,25,10000,-1,1,ref reason));
+   Check("invalid zero candidate risk is rejected",!ICTPositionEntryBudgetAllowed(s,0,10000,1,1,ref reason));
+   Check("risk sum overflow fails closed",(s.pending_risk_money=DBL_MAX)>0 && !ICTPositionEntryBudgetAllowed(s,DBL_MAX,10000,1,1,ref reason));
   }
 
 public static void TestLivePositionRiskDisplay() {
@@ -3988,6 +5350,18 @@ public static void TestLivePositionRiskDisplay() {
       StringFind(body,"+243.00 USD (2.43%)")>=0 && StringFind(body,"+23.00 USD (0.23%)")>=0);
    Check("cost treatment and actual entry basis are visible in risk panel",
       StringFind(body,"chưa trừ commission")>=0 && StringFind(body,"giá vào thực tế")>=0 && StringFind(body,"10.00 USD/lot")>=0);
+   s.symbol_filter=""; s.protection_online=true; s.protection_armed=true; s.protection_healthy=true;
+   Check("armed healthy protection has an explicit monitored state",ICTPositionSummaryValue(s,0,1,1)=="ĐANG GIÁM SÁT" && ICTPositionSummarySeverity(s,0,1,1)==1);
+   s.protection_armed=false;
+   Check("a fresh heartbeat alone does not imply automatic protection",ICTPositionSummaryValue(s,0,1,1)=="CHƯA BẬT TỰ ĐỘNG" && ICTPositionSummarySeverity(s,0,1,1)==2);
+   s.protection_armed=true; s.protection_state=1;
+   Check("a latched emergency overrides the healthy heartbeat",ICTPositionSummarySeverity(s,0,1,1)==3 && StringFind(ICTPositionSummaryValue(s,0,1,1),"KHÓA")>=0);
+   s.protection_state=0; s.daily_valid=true; s.daily_net=23;
+   Check("account pending risk is included in the compact SL total",(s.pending_risk_money=10)>0 && StringFind(ICTPositionSummaryValue(s,2,1,1),"117.00")>=0);
+   s.pending_risk_money=0; s.unknown_pending=1;
+   Check("unknown pending risk gets a critical text warning",StringFind(ICTPositionSummaryValue(s,2,1,1),"CHƯA ĐỦ")==0 && ICTPositionSummarySeverity(s,2,1,1)==3);
+   Check("unknown pending risk never presents a known daily headroom",ICTPositionSummaryValue(s,6,1,1)=="CHƯA XÁC ĐỊNH");
+   s.unknown_pending=0;
    p.stop=0; ICTCalculatePositionRisk(p,s.capital,s.cost_per_lot,r); s.positions[0]=r;
    ZeroMemory(s.totals); ICTAccumulatePositionRisk(r,s.totals); body=ICTPositionRiskBody(s);
    Check("missing SL is prominently shown as unknown with partial totals",
@@ -3997,8 +5371,613 @@ public static void TestLivePositionRiskDisplay() {
    Check("display never presents zero capital as a genuine 0 percent risk",StringFind(body,"chưa có vốn hợp lệ")>=0);
    s.connected=false; body=ICTPositionRiskBody(s);
    Check("disconnected account data is visibly labelled",StringFind(body,"MẤT KẾT NỐI")>=0);
-   s.selection_errors=1; ZeroMemory(s.totals);
+   s.connected=true; s.capital=10000; s.selection_errors=1; ZeroMemory(s.totals);
    Check("a failed position read cannot be mistaken for an empty account",ICTPositionRiskStatus(s)=="ĐANG ĐỒNG BỘ VỊ THẾ");
+  }
+
+
+
+
+
+public static void ICTStatFixtureSamples(ref SICTStatSample[] samples) {
+   ArrayResize(ref samples,1200);
+   for(int i=0;i<ArraySize(samples);i++)
+     {
+      SICTStatSample s=new SICTStatSample(); ZeroMemory(s);
+      s.label=i%3; s.asof=(long)(1000000+i*240); s.label_end=s.asof+240;
+      s.x[0]=s.label==0 ? 2.0 : s.label==1 ? -2.0 : 0.0;
+      s.x[1]=s.label==2 ? 1.0 : -1.0;
+      for(int k=2;k<32;k++) s.x[k]=MathSin(i*0.1+k)*0.05;
+      s.mask=s.label==0 ? 85 : s.label==1 ? 170 : 0;
+      samples[i]=s;
+     }
+  }
+public static void ICTStatFixtureRates(ref MqlRates[] rates) {
+   ArrayResize(ref rates,120);
+   for(int i=0;i<ArraySize(rates);i++)
+     {
+      MqlRates r=new MqlRates(); ZeroMemory(r);
+      r.time=(long)(1000000+i*60); r.open=100; r.close=100;
+      r.high=100.5; r.low=99.5; r.spread=0; r.tick_volume=100;
+      rates[i]=r;
+     }
+  }
+public static void ICTLiquidityFixture(SICTRangeSnapshot s,ref MqlRates[] r) {
+   ICTStatFixtureRates(ref r); ZeroMemory(s);
+   s.valid=true; s.schema=ICT_RANGE_SCHEMA; s.symbol="fixture"; s.ltf=PERIOD_M1;
+   s.range.valid=true; s.range.id="native_range"; s.range.low=98; s.range.high=102;
+   s.as_of=r[32].time+60; s.last_close=100; s.htf_bias=1; s.level_count=4;
+   for(int i=0;i<4;i++)
+     {
+      SICTRangeLevel l=new SICTRangeLevel(); ZeroMemory(l); l.id="native_pool_"+IntegerToString(i); l.range_id=s.range.id;
+      l.side=(i%2==0 ? 1 : -1); l.price=(i==0 ? 101 : i==1 ? 99 : i==2 ? 102 : 98);
+      l.state=IR_UNTOUCHED; l.timeframe=(i<2 ? PERIOD_M5 : PERIOD_H1);
+      l.membership=(i<2 ? IR_INTERNAL : IR_BOUNDARY); l.available_at=r[24].time;
+      s.levels[i]=l;
+     }
+  }
+public static void ICTLiquidityFixtureSamples(ref SICTStatSample[] samples) {
+   ArrayResize(ref samples,600);
+   for(int k=0;k<600;k++)
+     {
+      SICTRangeSnapshot snapshot=new SICTRangeSnapshot(); MqlRates[] r=InitArray<MqlRates>(0); ICTLiquidityFixture(snapshot,ref r);
+      for(int i=0;i<ArraySize(r);i++) r[i].time=(long)((long)r[i].time+(long)k*3600);
+      snapshot.as_of=r[32].time+60;
+      for(int i=0;i<4;i++) snapshot.levels[i].available_at=r[24].time;
+      SICTStatLiquidityPair p=new SICTStatLiquidityPair(); ICTStatLiquiditySelectPair(snapshot,r,33,p);
+      p.trend_bias=(k%3==0 ? 1 : k%3==1 ? -1 : 0); p.trend_closed_at=r[20].time;
+      if(k%3==0) { r[33].high=101.2; r[33].close=101; }
+      if(k%3==1) { r[33].low=98.8; r[33].close=99; }
+      SICTStatSample sample=new SICTStatSample(); ICTStatLiquidityFeatures(r,32,60,0.01,p,sample);
+      sample.label=ICTStatLiquidityLabel(r,ArraySize(r),32,4,60,p,ref sample.label_end);
+      samples[k]=sample;
+     }
+  }
+public static void RunICTLiquidityProbabilityFixtures() {
+   SICTRangeSnapshot snapshot=new SICTRangeSnapshot(); MqlRates[] r=InitArray<MqlRates>(0); ICTLiquidityFixture(snapshot,ref r);
+   SICTStatLiquidityPair p=new SICTStatLiquidityPair();
+   Check("LIQ selects closest untouched native pair on both sides",ICTStatLiquiditySelectPair(snapshot,r,33,p) && p.bsl==101 && p.ssl==99 && p.bsl_id=="native_pool_0");
+   SICTStatLiquidityPair parity=new SICTStatLiquidityPair(); ICTStatLiquiditySelectPair(snapshot,r,33,parity);
+   Check("LIQ replay parity checks frozen native identities",ICTStatLiquiditySamePair(p,parity));
+   parity.bsl_id="different_native_pool";
+   Check("LIQ same price cannot hide different native pool identity",!ICTStatLiquiditySamePair(p,parity));
+   Check("LIQ retains native lifecycle semantics for renderer",ICTRangeLevelUntouched(snapshot.levels[0],snapshot.as_of));
+   snapshot.levels[0].state=IR_APPROACHING;
+   Check("LIQ near but not touched pool remains eligible",ICTStatLiquiditySelectPair(snapshot,r,33,p) && p.bsl==101);
+   snapshot.levels[0].candidate=true;
+   Check("LIQ pending breakout is not untouched",ICTStatLiquiditySelectPair(snapshot,r,33,p) && p.bsl==102);
+   snapshot.levels[2].state=IR_CONSUMED;
+   Check("LIQ does not invent a missing upper pool",!ICTStatLiquiditySelectPair(snapshot,r,33,p));
+   ICTLiquidityFixture(snapshot,ref r);
+   r[30].high=101;
+   Check("LIQ exact wick touch excludes native-untouched pool",ICTStatLiquiditySelectPair(snapshot,r,33,p) && p.bsl==102);
+   ICTLiquidityFixture(snapshot,ref r); r[35].high=120;
+   Check("LIQ future wick cannot change historical pair",ICTStatLiquiditySelectPair(snapshot,r,33,p) && p.bsl==101 && p.ssl==99);
+   ICTLiquidityFixture(snapshot,ref r);
+   Check("LIQ respects hidden internal pool category",ICTStatLiquiditySelectPair(snapshot,r,33,p,false,true) && p.bsl==102 && p.ssl==98);
+   Check("LIQ respects hidden external pool category",ICTStatLiquiditySelectPair(snapshot,r,33,p,true,false) && p.bsl==101 && p.ssl==99);
+   Check("LIQ no forecast when all pool categories hidden",!ICTStatLiquiditySelectPair(snapshot,r,33,p,false,false));
+   for(int i=0;i<4;i++) snapshot.levels[i].available_at=r[0].time-60;
+   Check("LIQ missing pre-pool history cannot certify untouched",!ICTStatLiquiditySelectPair(snapshot,r,33,p));
+   ICTLiquidityFixture(snapshot,ref r); r[28].time++;
+   Check("LIQ missing intraday coverage cannot certify untouched",!ICTStatLiquiditySelectPair(snapshot,r,33,p));
+   ICTLiquidityFixture(snapshot,ref r); snapshot.as_of++;
+   Check("LIQ stale snapshot cannot reuse later OHLC",!ICTStatLiquiditySelectPair(snapshot,r,33,p));
+   ICTLiquidityFixture(snapshot,ref r); snapshot.levels[0].available_at=snapshot.as_of;
+   Check("LIQ newly confirmed pool starts its untouched clock at availability",ICTStatLiquiditySelectPair(snapshot,r,33,p) && p.bsl==101);
+   ICTLiquidityFixture(snapshot,ref r); ICTStatLiquiditySelectPair(snapshot,r,33,p);
+   p.trend_bias=1; p.trend_closed_at=r[20].time;
+   SICTStatSample sample=new SICTStatSample(); SICTStatSample future=new SICTStatSample();
+   Check("LIQ features encode barriers and known long trend",ICTStatLiquidityFeatures(r,32,60,0.01,p,sample) && sample.x[22]==0.5 && sample.x[23]==1 && sample.asof==snapshot.as_of);
+   r[40].close=1; r[40].low=0.5;
+   ICTStatLiquidityFeatures(r,32,60,0.01,p,future);
+   bool same=true; for(int k=0;k<32;k++) if(sample.x[k]!=future.x[k]) same=false;
+   Check("LIQ post-snapshot price cannot rewrite features",same);
+   p.trend_closed_at=p.asof+1;
+   Check("LIQ future daily trend is forbidden",!ICTStatLiquidityFeatures(r,32,60,0.01,p,sample));
+   p.trend_closed_at=r[20].time; r[20].time++;
+   Check("LIQ feature window rejects unclassified gaps",!ICTStatLiquidityFeatures(r,32,60,0.01,p,sample));
+   ICTLiquidityFixture(snapshot,ref r); ICTStatLiquiditySelectPair(snapshot,r,33,p);
+   long end=0;
+   r[33].high=101.2; r[33].close=101; r[34].low=98.8; r[34].close=99;
+   Check("LIQ BSL first survives later SSL hit",ICTStatLiquidityLabel(r,120,32,4,60,p,ref end)==0 && end==r[33].time+60);
+   ICTLiquidityFixture(snapshot,ref r); ICTStatLiquiditySelectPair(snapshot,r,33,p);
+   r[33].low=98.8; r[33].close=99; r[34].high=101.2; r[34].close=101;
+   Check("LIQ SSL first survives later BSL hit",ICTStatLiquidityLabel(r,120,32,4,60,p,ref end)==1);
+   ICTLiquidityFixture(snapshot,ref r); ICTStatLiquiditySelectPair(snapshot,r,33,p);
+   r[33].high=101; r[33].low=99;
+   Check("LIQ same-bar two touches stay ambiguous",ICTStatLiquidityLabel(r,120,32,4,60,p,ref end)==-2);
+   r[33].open=101.1; r[33].high=101.2;
+   Check("LIQ observed open precedes same-bar wicks",ICTStatLiquidityLabel(r,120,32,4,60,p,ref end)==0);
+   r[33].open=98.9; r[33].low=98.8;
+   Check("LIQ lower observed open precedes same-bar wicks",ICTStatLiquidityLabel(r,120,32,4,60,p,ref end)==1);
+   ICTLiquidityFixture(snapshot,ref r); ICTStatLiquiditySelectPair(snapshot,r,33,p);
+   r[33].high=101;
+   Check("LIQ exact equality counts as first touch",ICTStatLiquidityLabel(r,120,32,4,60,p,ref end)==0);
+   Check("LIQ incomplete horizon excluded despite early hit",ICTStatLiquidityLabel(r,34,32,4,60,p,ref end)==-1);
+   ICTLiquidityFixture(snapshot,ref r); ICTStatLiquiditySelectPair(snapshot,r,33,p);
+   Check("LIQ timeout keeps third outcome",ICTStatLiquidityLabel(r,120,32,4,60,p,ref end)==2 && end==r[36].time+60);
+   r[34].time+=60;
+   Check("LIQ gap inside target path is censored",ICTStatLiquidityLabel(r,120,32,4,60,p,ref end)==-1);
+   ICTLiquidityFixture(snapshot,ref r); ICTStatLiquiditySelectPair(snapshot,r,33,p); p.bsl=0;
+   Check("LIQ invalid barrier cannot become timeout",ICTStatLiquidityLabel(r,120,32,4,60,p,ref end)==-1);
+   SICTStatSample geometry_sample=new SICTStatSample(); ZeroMemory(geometry_sample); geometry_sample.x[22]=0.25;
+   double[] geometry=InitArray<double>(3); ICTStatLiquidityGeometry(geometry_sample,0.2,ref geometry);
+   Check("LIQ distance baseline retains trained timeout prior",MathAbs(geometry[0]-0.2)<1e-9 && MathAbs(geometry[1]-0.6)<1e-9 && geometry[2]==0.2);
+
+   SICTStatSample[] samples=InitArray<SICTStatSample>(0); ICTLiquidityFixtureSamples(ref samples);
+   SICTStatConfig c=new SICTStatConfig(); ICTStatDefaultConfig(c); c.min_train=200; c.min_evaluation=50;
+   SICTStatModel model=new SICTStatModel(); SICTStatSnapshot metrics=new SICTStatSnapshot(); SICTStatLiquidityAudit audit=new SICTStatLiquidityAudit(); ZeroMemory(audit);
+   Check("LIQ native-feature first-touch samples prepare separately",ICTStatPrepare(c,samples,model,metrics));
+   int steps=0; while(ICTStatTrainStep(model,samples,metrics) && steps++<100000) {}
+   Check("LIQ trained first-touch network evaluates held-result_out labels",ICTStatFinish(model,samples,metrics) && metrics.ready);
+   Check("LIQ synthetic long-trend signal beats both baselines",ICTStatLiquidityAuditModel(model,samples,metrics,audit) && audit.validation_pass);
+   Check("LIQ calibration audit metrics are finite",audit.log_loss>=0 && audit.ece>=0 && audit.ece<=1 && MathIsValidNumber(audit.brier_geometry));
+   SICTStatSnapshot prediction=new SICTStatSnapshot();
+   Check("LIQ learned BSL-first probability comes from its own network",ICTStatPredict(model,samples[0],prediction) && prediction.dl[0]>0.75);
+   Check("LIQ observed training context remains in support",ICTStatLiquidityInSupport(model,samples[0]));
+   double distance=samples[0].x[20]; samples[0].x[20]+=100000;
+   Check("LIQ unseen barrier geometry cannot publish clipped extrapolation",!ICTStatLiquidityInSupport(model,samples[0]));
+   samples[0].x[20]=distance;
+   bool calibrated=metrics.calibrated; metrics.calibrated=false;
+   Check("LIQ uncalibrated model cannot publish probabilities",!ICTStatLiquidityAuditModel(model,samples,metrics,audit) && !audit.validation_pass);
+   metrics.calibrated=calibrated; metrics.brier_combined=1.1;
+   Check("LIQ poor first-touch model cannot pass distance baseline",!ICTStatLiquidityAuditModel(model,samples,metrics,audit));
+  }
+
+public static void RunICTStatisticalLearningFixtures() {
+   SICTStatConfig c=new SICTStatConfig(); ICTStatDefaultConfig(c);
+   Check("STAT default configuration",ICTStatValidConfig(c));
+   c.horizon=0; Check("STAT rejects zero horizon",!ICTStatValidConfig(c)); c.horizon=4;
+   MqlRates[] rates=InitArray<MqlRates>(0); ICTStatFixtureRates(ref rates);
+   Check("STAT validates ordered OHLC",ICTStatValidRates(rates));
+   rates[20].time=rates[19].time; Check("STAT rejects duplicate bars",!ICTStatValidRates(rates)); ICTStatFixtureRates(ref rates);
+   rates[20].high=99; Check("STAT rejects malformed OHLC",!ICTStatValidRates(rates)); ICTStatFixtureRates(ref rates);
+   SICTStatSample before=new SICTStatSample(); SICTStatSample after=new SICTStatSample();
+   Check("STAT creates closed-prefix features",ICTStatFeatures(rates,32,0.01,before));
+   rates[40].high=200; ICTStatFeatures(rates,32,0.01,after);
+   bool unchanged=true; for(int k=0;k<32;k++) if(before.x[k]!=after.x[k]) unchanged=false;
+   Check("STAT future bars cannot alter current features",unchanged && before.mask==after.mask);
+   Check("STAT excludes immature labels",ICTStatLabel(rates,119,4,0.25,0.01)==-1);
+   rates[36].close=101; rates[36].high=101.5;
+   Check("STAT up label uses horizon close",ICTStatLabel(rates,32,4,0.25,0.01)==0);
+   rates[36].close=99; rates[36].low=98.5;
+   Check("STAT down label uses horizon close",ICTStatLabel(rates,32,4,0.25,0.01)==1);
+   rates[36].close=100.1;
+   Check("STAT flat label retains neutral class",ICTStatLabel(rates,32,4,0.25,0.01)==2);
+   rates[36].close=100.3; rates[32].spread=10;
+   Check("STAT recorded spread widens neutral band",ICTStatLabel(rates,32,4,0.25,0.01)==2);
+   ICTStatFixtureRates(ref rates);
+   rates[31].open=100.2; rates[31].close=99.9;
+   rates[32].open=99.8; rates[32].close=100.3;
+   Check("STAT bullish engulfing confirmation",(ICTStatPatternMask(rates,32) & 4)!=0);
+   rates[32].low=99.2;
+   Check("STAT bullish sweep reclaim confirmation",(ICTStatPatternMask(rates,32) & 1)!=0);
+   rates[32].high=101; rates[32].close=100.8;
+   Check("STAT breakout confirmation",(ICTStatPatternMask(rates,32) & 16)!=0);
+   ICTStatFixtureRates(ref rates);
+   rates[28].open=98.6; rates[28].close=98.8; rates[28].high=99; rates[28].low=98;
+   rates[30].open=100.2; rates[30].close=100.4; rates[30].high=100.6; rates[30].low=100;
+   rates[31].open=100.4; rates[31].close=100.3; rates[31].high=100.6; rates[31].low=100.1;
+   rates[32].open=100.2; rates[32].close=100.5; rates[32].high=100.6; rates[32].low=100;
+   Check("STAT first FVG retest",(ICTStatPatternMask(rates,32) & 64)!=0);
+   rates[31].low=99.9;
+   Check("STAT excludes consumed FVG retest",(ICTStatPatternMask(rates,32) & 64)==0);
+   ICTStatFixtureRates(ref rates);
+   SICTStatSample[] built=InitArray<SICTStatSample>(0);
+   Check("STAT builds only mature disjoint samples",ICTStatBuildSamples(rates,0.01,c,ref built) && ArraySize(built)>0 &&
+      built[0].label_end<=built[1].asof && built[ArraySize(built)-1].label_end<=rates[119].time);
+   SICTStatModel model=new SICTStatModel(); SICTStatModel other=new SICTStatModel(); SICTStatSnapshot snapshot=new SICTStatSnapshot(); SICTStatSnapshot other_snapshot=new SICTStatSnapshot();
+   SICTStatSample[] samples=InitArray<SICTStatSample>(0); SICTStatSample[] changed=InitArray<SICTStatSample>(0); ICTStatFixtureSamples(ref samples); ICTStatFixtureSamples(ref changed);
+   Check("STAT prepares chronological partitions",ICTStatPrepare(c,samples,model,snapshot) &&
+      model.train_end<model.cal_start_time && model.cal_end<model.test_start_time);
+   long old_end=samples[model.train_n-1].label_end;
+   samples[model.train_n-1].label_end=model.cal_start_time;
+   Check("STAT purges boundary-crossing training labels",!ICTStatPrepare(c,samples,other,other_snapshot) && other_snapshot.status=="INVALID_SPLIT");
+   samples[model.train_n-1].label_end=old_end;
+   for(int i=model.test_start;i<ArraySize(changed);i++)
+     { changed[i].x[0]+=100; changed[i].label=(changed[i].label+1)%3; }
+   Check("STAT prepares changed future validation",ICTStatPrepare(c,changed,other,other_snapshot));
+   Check("STAT scaler and priors fitted on train only",model.mean[0]==other.mean[0] && model.scale[0]==other.scale[0] && model.prior[0]==other.prior[0]);
+   double[] initial=InitArray<double>(3); double[] trained=InitArray<double>(3); ICTStatForward(model,samples[0],true,1,ref initial);
+   int steps=0;
+   while(ICTStatTrainStep(model,samples,snapshot) && steps++<100000) {}
+   steps=0; while(ICTStatTrainStep(other,changed,other_snapshot) && steps++<100000) {}
+   ICTStatForward(model,samples[0],true,1,ref trained);
+   Check("STAT neural backprop learns separable synthetic features",trained[0]>initial[0]+0.3 && trained[0]>0.8);
+   bool same=true;
+   for(int k=0;k<ICT_STAT_LR_WEIGHTS;k++) if(model.lr[k]!=other.lr[k]) same=false;
+   for(int k=0;k<ICT_STAT_DNN_WEIGHTS;k++) if(model.deep[k]!=other.deep[k]) same=false;
+   Check("STAT validation labels and features cannot train models",same);
+   Check("STAT evaluates untouched later partition",ICTStatFinish(model,samples,snapshot) && snapshot.ready && snapshot.test_n==model.test_n);
+   Check("STAT compares both trained models to climatology",snapshot.brier_ml<snapshot.brier_baseline*0.5 && snapshot.brier_dl<snapshot.brier_baseline*0.5 && snapshot.beats_baseline);
+   Check("STAT calibration uses a separate partition",ICTStatFinish(other,changed,other_snapshot) && model.calibrated && other.calibrated &&
+      model.lr_temperature==other.lr_temperature && model.deep_temperature==other.deep_temperature);
+   Check("STAT reports validation pattern support only",snapshot.pattern_n[0]>0 && snapshot.pattern_n[0]<=model.test_n &&
+      snapshot.pattern_hits[0]==snapshot.pattern_n[0] && snapshot.pattern_hits[1]==snapshot.pattern_n[1]);
+   Check("STAT current probabilities normalize",ICTStatPredict(model,samples[0],snapshot) &&
+      MathAbs(snapshot.combined[0]+snapshot.combined[1]+snapshot.combined[2]-1)<0.000001 && snapshot.combined[0]>0.8);
+   double previous_up=snapshot.combined[0];
+   Check("STAT current context changes the forecast",ICTStatPredict(model,samples[1],other_snapshot) &&
+      other_snapshot.combined[1]>0.8 && other_snapshot.combined[0]<previous_up);
+   SICTStatModel empty=new SICTStatModel(); ZeroMemory(empty);
+   Check("STAT unfitted model clears readiness",!ICTStatPredict(empty,samples[0],snapshot) && !snapshot.ready);
+   double low=0,high=0; ICTStatWilson(5,10,ref low,ref high);
+   Check("STAT Wilson interval accounts for small support",low>0.23 && low<0.24 && high>0.76 && high<0.77);
+   ICTStatWilson(0,0,ref low,ref high); Check("STAT no-support interval remains unknown",low==0 && high==1);
+   double[] logits = new double[] {1000,-1000,0}; double[] probabilities=InitArray<double>(3); ICTStatSoftmax(logits,1,ref probabilities);
+   Check("STAT softmax remains finite on extreme logits",MathIsValidNumber(probabilities[0]) && MathAbs(probabilities[0]+probabilities[1]+probabilities[2]-1)<0.000001);
+   ArrayResize(ref samples,100);
+   Check("STAT insufficient samples never expose probabilities",!ICTStatPrepare(c,samples,model,snapshot) && !snapshot.ready);
+   ICTStatFixtureSamples(ref samples);
+   for(int i=0;i<ArraySize(samples);i++) samples[i].label=0;
+   Check("STAT one-class training is rejected",!ICTStatPrepare(c,samples,model,snapshot) && snapshot.status=="INSUFFICIENT_CLASSES");
+   RunICTLiquidityProbabilityFixtures();
+  }
+
+
+
+
+
+public static void ICTFocusFixture(ref MqlRates[] r,SICTRangeLiquidityEvent e,SICTSweepFocusConfig c) {
+   ArrayResize(ref r,70);
+   double[] wave = new double[] {0,0.5,1,1.5,1,0.5,0,-0.5};
+   for(int i=0;i<70;i++)
+     {
+      MqlRates b=new MqlRates(); ZeroMemory(b); b.time=(long)(1000000+i*60);
+      double center=100+i*0.1+wave[i%8];
+      b.open=center-0.1; b.close=center; b.high=center+0.3; b.low=center-0.3;
+      r[i]=b;
+     }
+   r[40].open=104.5; r[40].close=104.3; r[40].high=106; r[40].low=103.8;
+   r[41].open=104.4; r[41].close=101.5; r[41].high=104.5; r[41].low=101.2;
+   ZeroMemory(e); e.id="focus-bsl"; e.pool_id="native-pool"; e.side=1;
+   e.type=IR_EVENT_LIQUIDITY_SWEEP; e.membership=IR_BOUNDARY;
+   e.source_tf=PERIOD_M5; e.event_tf=PERIOD_M1; e.sweep_number=1;
+   e.bar_time=r[40].time; e.wick_time=e.bar_time; e.confirmed_at=e.bar_time+60;
+   e.level=r[35].high; e.wick=r[40].high; e.close=r[40].close;
+   c.left=2; c.right=2; c.max_bars=12; c.buffer_ticks=1;
+   c.require_displacement=true; c.body_atr=1; c.body_fraction=0.6;
+  }
+public static void ICTFocusH1Fixture(ref MqlRates[] r,SICTSweepFocus v) {
+   ArrayResize(ref r,124);
+   double[] wave = new double[] {0,0.5,1,1.5,1,0.5,0,-0.5};
+   long start=Stamp("2026.11.02");
+   for(int i=0;i<124;i++)
+     {
+      MqlRates b=new MqlRates(); ZeroMemory(b); b.time=start+i*3600;
+      double center=100+i*0.1+wave[i%8];
+      b.open=center-0.1; b.close=center; b.high=center+0.3; b.low=center-0.3;
+      r[i]=b;
+     }
+   ZeroMemory(v); v.valid=true; v.evt.side=-1;
+   v.evt.confirmed_at=r[119].time+3600;
+  }
+public static void RunICTSweepFocusH1Fixtures() {
+   MqlRates[] h1=InitArray<MqlRates>(0); SICTSweepFocus v=new SICTSweepFocus();
+   ICTFocusH1Fixture(ref h1,v);
+   Check("FOCUS H1 uses confirmed bullish swing structure",ICTSweepFocusH1Context(h1,124,2,2,v) && v.h1_ready && v.h1_bias==1);
+   Check("FOCUS SSL arrow aligns with bullish H1",ICTSweepFocusAlignedH1(v));
+   Check("FOCUS H1 includes candle closing exactly at reclaim",v.h1_closed_at==v.evt.confirmed_at);
+   long frozen=v.h1_closed_at;
+   h1[120].high=0;
+   Check("FOCUS H1 ignores malformed future OHLC",ICTSweepFocusH1Context(h1,124,2,2,v) && v.h1_bias==1 && v.h1_closed_at==frozen);
+   v.evt.confirmed_at+=1800;
+   Check("FOCUS H1 excludes containing half-closed candle",ICTSweepFocusH1Context(h1,124,2,2,v) && v.h1_closed_at==frozen);
+   v.evt.side=1;
+   Check("FOCUS BSL arrow opposes bullish H1",!ICTSweepFocusAlignedH1(v));
+   v.evt.confirmed_at+=1800;
+   Check("FOCUS H1 rejects invalid OHLC after its close",!ICTSweepFocusH1Context(h1,124,2,2,v) && !v.h1_ready && v.h1_bias==0 && v.h1_closed_at==0);
+   ICTFocusH1Fixture(ref h1,v);
+   Check("FOCUS H1 requires full 120-bar lookback",!ICTSweepFocusH1Context(h1,119,2,2,v) && !v.h1_ready);
+   Check("FOCUS H1 rejects count beyond history",!ICTSweepFocusH1Context(h1,125,2,2,v));
+   v.evt.confirmed_at+=3600;
+   Check("FOCUS H1 missing latest closed hour cannot retain old bias",!ICTSweepFocusH1Context(h1,120,2,2,v) && !v.h1_ready);
+   ICTFocusH1Fixture(ref h1,v);
+   for(int i=0;i<124;i++)
+     { h1[i].open-=i*0.1; h1[i].close-=i*0.1; h1[i].high-=i*0.1; h1[i].low-=i*0.1; }
+   Check("FOCUS H1 neutral structure is not directional approval",ICTSweepFocusH1Context(h1,124,2,2,v) && v.h1_ready && v.h1_bias==0 && !ICTSweepFocusAlignedH1(v));
+   ICTFocusH1Fixture(ref h1,v);
+   for(int i=0;i<124;i++)
+     {
+      double high=h1[i].high; h1[i].high=300-h1[i].low; h1[i].low=300-high;
+      h1[i].open=300-h1[i].open; h1[i].close=300-h1[i].close;
+     }
+   v.evt.side=1;
+   Check("FOCUS bearish H1 prioritizes BSL downward arrow",ICTSweepFocusH1Context(h1,124,2,2,v) && v.h1_bias==-1 && ICTSweepFocusAlignedH1(v));
+   v.valid=false;
+   Check("FOCUS H1 invalid evt clears old alignment",!ICTSweepFocusH1Context(h1,124,2,2,v) && !ICTSweepFocusAlignedH1(v));
+
+   SICTSweepFocus older=new SICTSweepFocus(); SICTSweepFocus newer=new SICTSweepFocus(); ZeroMemory(older); ZeroMemory(newer);
+   older.valid=true; older.h1_ready=true; older.h1_bias=1;
+   older.evt.side=-1; older.evt.confirmed_at=100; older.evt.source_tf=PERIOD_M5;
+   newer.valid=true; newer.h1_ready=true; newer.h1_bias=1;
+   newer.evt.side=1; newer.evt.confirmed_at=200; newer.evt.source_tf=PERIOD_H4;
+   Check("FOCUS aligned H1 outranks newer countertrend arrow",ICTSweepFocusPrefer(older,newer,true) && !ICTSweepFocusPrefer(newer,older,true));
+   Check("FOCUS optional H1 preference restores chronological order",ICTSweepFocusPrefer(newer,older,false) && !ICTSweepFocusPrefer(older,newer,false));
+   newer.h1_ready=false;
+   Check("FOCUS missing H1 cannot outrank verified alignment",ICTSweepFocusPrefer(older,newer,true) && !ICTSweepFocusAlignedH1(newer));
+   newer.h1_ready=true; newer.h1_bias=0;
+   Check("FOCUS neutral H1 cannot outrank verified alignment",ICTSweepFocusPrefer(older,newer,true) && !ICTSweepFocusAlignedH1(newer));
+   newer.h1_bias=1; newer.evt.side=-1;
+   Check("FOCUS newest aligned arrow wins within aligned group",ICTSweepFocusPrefer(newer,older,true));
+   newer.evt.confirmed_at=older.evt.confirmed_at;
+   Check("FOCUS same-time alignment prefers higher source timeframe",ICTSweepFocusPrefer(newer,older,true) && !ICTSweepFocusPrefer(older,newer,true));
+   older.h1_bias=0; newer.h1_ready=false; newer.evt.confirmed_at=200;
+   Check("FOCUS no directional H1 falls back to newest arrow",ICTSweepFocusPrefer(newer,older,true));
+   newer.valid=false;
+   Check("FOCUS invalid evt cannot take a priority slot",!ICTSweepFocusPrefer(newer,older,true));
+   older.valid=false; newer.valid=true;
+   Check("FOCUS valid evt replaces empty priority slot",ICTSweepFocusPrefer(newer,older,true));
+  }
+public static void RunICTSweepFocusFixtures() {
+   MqlRates[] r=InitArray<MqlRates>(0); SICTRangeLiquidityEvent e=new SICTRangeLiquidityEvent(); SICTSweepFocusConfig c=new SICTSweepFocusConfig();
+   ICTFocusFixture(ref r,e,c); SICTSweepFocus v=new SICTSweepFocus();
+   Check("FOCUS accepts only confirmed native sweep",ICTSweepFocusEligible(e,e.confirmed_at,1,PERIOD_M1,true,true));
+   Check("FOCUS rejects not-yet-confirmed evt",!ICTSweepFocusEligible(e,e.confirmed_at-1,1,PERIOD_M1,true,true));
+   Check("FOCUS respects chart timeframe",!ICTSweepFocusEligible(e,e.confirmed_at,1,PERIOD_M5,true,true));
+   Check("FOCUS respects hidden external liquidity",!ICTSweepFocusEligible(e,e.confirmed_at,1,PERIOD_M1,true,false));
+   e.type=IR_EVENT_FALSE_BREAKOUT;
+   Check("FOCUS keeps false breakout distinct",!ICTSweepFocusEligible(e,e.confirmed_at,1,PERIOD_M1,true,true));
+   ICTFocusFixture(ref r,e,c);
+   Check("FOCUS waits at sweep close",ICTSweepFocusAnalyze(r,70,e,e.confirmed_at,60,0.01,c,v) && v.status==ICT_FOCUS_WAIT);
+   Check("FOCUS freezes confirmed prior low",v.pivot_time==r[31].time && MathAbs(v.pivot_level-r[31].low)<0.000001 && v.prior_bias==1);
+   double frozen=v.pivot_level;
+   r[41].high=0;
+   Check("FOCUS never reads future candle values",ICTSweepFocusAnalyze(r,70,e,e.confirmed_at,60,0.01,c,v) && v.status==ICT_FOCUS_WAIT && v.pivot_level==frozen);
+   ICTFocusFixture(ref r,e,c);
+   Check("FOCUS confirms bearish MSS after sweep",ICTSweepFocusAnalyze(r,70,e,r[41].time+60,60,0.01,c,v) && v.status==ICT_FOCUS_MSS && v.mss_time==r[41].time);
+   Check("FOCUS timestamps MSS at closed candle",v.mss_confirmed_at==r[41].time+60 && v.mss_confirmed_at>e.confirmed_at);
+   r[41].close=103; r[41].open=104;
+   Check("FOCUS wick-only structure break is insufficient",ICTSweepFocusAnalyze(r,70,e,r[41].time+60,60,0.01,c,v) && v.status==ICT_FOCUS_WAIT);
+   ICTFocusFixture(ref r,e,c); r[41].open=101.6;
+   Check("FOCUS requires displacement on first close break",ICTSweepFocusAnalyze(r,70,e,r[41].time+60,60,0.01,c,v) && v.status==ICT_FOCUS_WEAK_BREAK);
+   c.require_displacement=false;
+   Check("FOCUS optional displacement changes explanation only",ICTSweepFocusAnalyze(r,70,e,r[41].time+60,60,0.01,c,v) && v.status==ICT_FOCUS_MSS);
+   ICTFocusFixture(ref r,e,c); r[38].low=101; r[38].close=102;
+   Check("FOCUS rejects pre-sweep broken swing",ICTSweepFocusAnalyze(r,70,e,r[41].time+60,60,0.01,c,v) && v.status==ICT_FOCUS_PREBROKEN);
+   ICTFocusFixture(ref r,e,c); r[40].close=101.5; r[40].low=101; e.close=r[40].close;
+   Check("FOCUS does not call same-candle break post-sweep MSS",ICTSweepFocusAnalyze(r,70,e,e.confirmed_at,60,0.01,c,v) && v.status==ICT_FOCUS_PREBROKEN);
+   ICTFocusFixture(ref r,e,c); r[41].close=106.2; r[41].high=106.5;
+   Check("FOCUS closes beyond sweep invalidate pending MSS",ICTSweepFocusAnalyze(r,70,e,r[41].time+60,60,0.01,c,v) && v.status==ICT_FOCUS_INVALIDATED);
+   ICTFocusFixture(ref r,e,c); c.max_bars=2;
+   for(int i=41;i<=42;i++) { r[i].open=104.5; r[i].close=104.3; r[i].high=105; r[i].low=103.8; }
+   Check("FOCUS expires on trading candle count",ICTSweepFocusAnalyze(r,70,e,r[42].time+60,60,0.01,c,v) && v.status==ICT_FOCUS_EXPIRED && v.closed_after==2);
+   ICTFocusFixture(ref r,e,c);
+   for(int i=0;i<40;i++) { r[i].open-=i*0.1; r[i].close-=i*0.1; r[i].high-=i*0.1; r[i].low-=i*0.1; }
+   r[41].close=97; r[41].low=96;
+   Check("FOCUS neutral prior structure yields break, not MSS",ICTSweepFocusAnalyze(r,70,e,r[41].time+60,60,0.01,c,v) && v.status==ICT_FOCUS_BOS && v.prior_bias==0);
+   ICTFocusFixture(ref r,e,c);
+   for(int i=0;i<70;i++)
+     {
+      double high=r[i].high; r[i].high=200-r[i].low; r[i].low=200-high;
+      r[i].open=200-r[i].open; r[i].close=200-r[i].close;
+     }
+   e.side=-1; e.level=200-e.level; e.wick=200-e.wick; e.close=200-e.close;
+   Check("FOCUS bullish SSL/MSS mirrors bearish rules",ICTSweepFocusAnalyze(r,70,e,r[41].time+60,60,0.01,c,v) && v.status==ICT_FOCUS_MSS && v.prior_bias==-1);
+   ICTFocusFixture(ref r,e,c); e.wick+=0.1;
+   Check("FOCUS rejects revised native wick",!ICTSweepFocusAnalyze(r,70,e,e.confirmed_at,60,0.01,c,v));
+   ICTFocusFixture(ref r,e,c); c.buffer_ticks=-1;
+   Check("FOCUS rejects invalid MSS configuration",!ICTSweepFocusAnalyze(r,70,e,e.confirmed_at,60,0.01,c,v));
+   ICTFocusFixture(ref r,e,c); ICTSweepFocusAnalyze(r,70,e,e.confirmed_at,60,0.01,c,v);
+   SICTStatModel model=new SICTStatModel(); ZeroMemory(model);
+   Check("FOCUS no synthetic probability before fit",!ICTSweepFocusForecast(r,70,0.01,model,PERIOD_M1,v) && !v.forecast_ready);
+   model.fitted=true; model.train_end=r[20].time; model.cal_end=r[30].time;
+   model.lr_temperature=1; model.deep_temperature=1;
+   for(int k=0;k<32;k++) model.scale[k]=1;
+   model.lr[0]=0.5;
+   Check("FOCUS forecasts from confirmation prefix",ICTSweepFocusForecast(r,70,0.01,model,PERIOD_M1,v) && v.forecast_ready && v.forecast_asof==e.confirmed_at);
+   double prob=v.ml[0]; r[41].close=1; r[41].low=0.5;
+   Check("FOCUS post-sweep price cannot rewrite forecast features",ICTSweepFocusForecast(r,70,0.01,model,PERIOD_M1,v) && v.ml[0]==prob);
+   Check("FOCUS rejects other-timeframe model",!ICTSweepFocusForecast(r,70,0.01,model,PERIOD_M5,v) && !v.forecast_ready);
+   model.cal_end=e.bar_time;
+   Check("FOCUS rejects calibration including evt outcomes",!ICTSweepFocusForecast(r,70,0.01,model,PERIOD_M1,v) && !v.forecast_ready);
+   model.train_end=e.bar_time+60; model.cal_end=e.bar_time+120;
+   Check("FOCUS rejects training after historical evt",!ICTSweepFocusForecast(r,70,0.01,model,PERIOD_M1,v));
+   RunICTSweepFocusH1Fixtures();
+  }
+
+
+
+
+public static void AnalyticalFixture(SICTAnalyticalContext c,SICTAnalyticalVotes v) {
+   ZeroMemory(c); ZeroMemory(v); c.symbol="TEST"; c.valid=true;
+   c.ltf=PERIOD_M5; c.mtf=PERIOD_M15; c.htf=PERIOD_H1;
+   c.asof=100300; c.ltf_closed=c.asof; c.mtf_closed=99900; c.htf_closed=97200;
+   c.htf_bias=1; c.mtf_bias=1;
+   for(int i=0;i<4;i++) v.available[i]=true;
+   v.value[ICT_A_PATH]=0.8; v.value[ICT_A_CANDLE]=0.5;
+  }
+public static void TestAnalyticalConsensus() {
+   SICTAnalyticalContext c=new SICTAnalyticalContext(); SICTAnalyticalVotes v=new SICTAnalyticalVotes(); SICTAnalyticalConfig config=new SICTAnalyticalConfig(); SICTAnalyticalResult s=new SICTAnalyticalResult();
+   AnalyticalFixture(c,v); ICTAnalyticalDefaults(config);
+   Check("analysis defaults are valid",ICTAnalyticalValidConfig(config));
+   Check("early analysis accepts partial evidence without requiring all six groups",ICTAnalyticalEvaluate(config,c,v,s) &&
+      s.signal && s.groups==4 && s.supporters==2 && !s.deep_used && MathAbs(s.score-66.25)<1e-9);
+   Check("analysis does not change native context",c.htf_bias==1 && c.mtf_bias==1 && c.asof==100300);
+   config.minimum_score=70;
+   Check("higher analysis threshold suppresses the same candidate",!ICTAnalyticalEvaluate(config,c,v,s) && !s.signal);
+   config.minimum_score=60; config.require_deep=true;
+   Check("explicit deep requirement withholds technical-only signals",!ICTAnalyticalEvaluate(config,c,v,s) && !s.deep_used);
+   v.available[ICT_A_DEEP]=true; v.value[ICT_A_DEEP]=0.6;
+   Check("validated deep evidence participates once",ICTAnalyticalEvaluate(config,c,v,s) && s.deep_used && s.groups==5 &&
+      MathAbs(s.score-69)<1e-9);
+   AnalyticalFixture(c,v); ICTAnalyticalDefaults(config); v.value[ICT_A_LIQUIDITY]=-1; v.value[ICT_A_ZONES]=-1;
+   Check("opposing evidence reduces mean instead of disappearing",!ICTAnalyticalEvaluate(config,c,v,s) &&
+      s.opponents==2 && s.score<50);
+   AnalyticalFixture(c,v); v.available[ICT_A_LIQUIDITY]=false; v.available[ICT_A_ZONES]=false;
+   Check("too little coverage cannot inflate the mean",!ICTAnalyticalEvaluate(config,c,v,s) && !s.ready && s.groups==2);
+   AnalyticalFixture(c,v); v.value[ICT_A_CANDLE]=0;
+   Check("one strong group cannot replace the supporting quorum",!ICTAnalyticalEvaluate(config,c,v,s) && s.supporters==1);
+   AnalyticalFixture(c,v); v.value[ICT_A_PATH]=0; v.value[ICT_A_CANDLE]=0;
+   Check("observed neutrality stays at fifty and creates no signal",!ICTAnalyticalEvaluate(config,c,v,s) && s.score==50);
+   AnalyticalFixture(c,v); v.value[ICT_A_PATH]=0.4; v.value[ICT_A_CANDLE]=0.4;
+   Check("inclusive score boundary is deterministic",ICTAnalyticalEvaluate(config,c,v,s) && MathAbs(s.score-60)<1e-9);
+   AnalyticalFixture(c,v); c.htf_bias=-1; c.mtf_bias=-1; v.value[ICT_A_PATH]*=-1; v.value[ICT_A_CANDLE]*=-1;
+   Check("bearish analysis is symmetric",ICTAnalyticalEvaluate(config,c,v,s) && s.direction==-1 && MathAbs(s.score-66.25)<1e-9);
+   c.mtf_bias=1;
+   Check("lower threshold never overrides opposite MTF",!ICTAnalyticalEvaluate(config,c,v,s) && !s.ready);
+   c.mtf_bias=0;
+   Check("neutral MTF remains blocked",!ICTAnalyticalEvaluate(config,c,v,s));
+   c.mtf_bias=-1; c.htf_bias=0;
+   Check("neutral HTF remains blocked",!ICTAnalyticalEvaluate(config,c,v,s));
+   AnalyticalFixture(c,v); c.htf_closed=c.asof+1;
+   Check("future HTF remains blocked",!ICTAnalyticalEvaluate(config,c,v,s));
+   AnalyticalFixture(c,v); c.mtf_closed=0;
+   Check("missing MTF remains blocked",!ICTAnalyticalEvaluate(config,c,v,s));
+   AnalyticalFixture(c,v); c.ltf_closed=c.asof-1;
+   Check("stale LTF remains blocked",!ICTAnalyticalEvaluate(config,c,v,s));
+   AnalyticalFixture(c,v); c.mtf=c.ltf;
+   Check("duplicate tiers remain blocked",!ICTAnalyticalEvaluate(config,c,v,s));
+   AnalyticalFixture(c,v); c.valid=false;
+   Check("invalid native context remains blocked",!ICTAnalyticalEvaluate(config,c,v,s));
+   AnalyticalFixture(c,v); v.value[ICT_A_PATH]=1.01;
+   Check("invalid evidence cannot be renormalized into a signal",!ICTAnalyticalEvaluate(config,c,v,s) && !s.signal);
+   v.value[ICT_A_PATH]=0.8; config.minimum_groups=1;
+   Check("invalid coverage configuration is rejected",!ICTAnalyticalEvaluate(config,c,v,s));
+   ICTAnalyticalDefaults(config); config.minimum_supporters=4;
+   Check("supporting quorum cannot exceed required coverage",!ICTAnalyticalValidConfig(config));
+   ICTAnalyticalDefaults(config); config.minimum_score=50;
+   Check("neutral-score threshold is not an analysis preset",!ICTAnalyticalValidConfig(config));
+   int loose=0,strict=0;
+   for(int i=0;i<=10;i++)
+     {
+      AnalyticalFixture(c,v); v.value[ICT_A_PATH]=i/10.0; v.value[ICT_A_CANDLE]=i/10.0;
+      ICTAnalyticalDefaults(config); if(ICTAnalyticalEvaluate(config,c,v,s)) loose++;
+      config.minimum_score=70; if(ICTAnalyticalEvaluate(config,c,v,s)) strict++;
+     }
+   Check("lower advisory threshold increases coverage on the fixed synthetic cohort",loose==7 && strict==3);
+  }
+public static void TestAnalyticalCausalityAndDeep() {
+   MqlRates[] bars=InitArray<MqlRates>(0); ArrayResize(ref bars,40);
+   for(int i=0;i<40;i++) FixtureBar(bars[i],100000+i*300,100+i*0.2,100.5+i*0.2,99.8+i*0.2,100.3+i*0.2);
+   long asof=bars[39].time+300; SICTAnalyticalVotes v=new SICTAnalyticalVotes(); ZeroMemory(v); double atr=0;
+   Check("closed price path produces two bounded groups",ICTAnalyticalPriceVotes(bars,PERIOD_M5,asof,0.01,v,ref atr) &&
+      v.available[ICT_A_PATH] && v.available[ICT_A_CANDLE] && MathAbs(v.value[ICT_A_PATH])<=1 && MathAbs(v.value[ICT_A_CANDLE])<=1);
+   double path=v.value[ICT_A_PATH],candle=v.value[ICT_A_CANDLE];
+   ArrayResize(ref bars,41); FixtureBar(bars[40],asof,1,9999,0,5000);
+   Check("invalid unfinished future bar cannot change past evidence",ICTAnalyticalPriceVotes(bars,PERIOD_M5,asof,0.01,v,ref atr) &&
+      MathAbs(v.value[ICT_A_PATH]-path)<1e-9 && MathAbs(v.value[ICT_A_CANDLE]-candle)<1e-9);
+   Check("stale price prefix is not current analysis",!ICTAnalyticalPriceVotes(bars,PERIOD_M5,asof-1,0.01,v,ref atr));
+   ICTAnalyticalPriceVotes(bars,PERIOD_M5,asof,0.01,v,ref atr);
+   SICTStatModel model=new SICTStatModel(); SICTStatSnapshot stat=new SICTStatSnapshot(); ZeroMemory(model); ZeroMemory(stat);
+   model.fitted=true; model.calibrated=true; model.train_end=bars[5].time; model.cal_end=bars[15].time; model.test_end=bars[30].time;
+   for(int i=0;i<ICT_STAT_FEATURES;i++) model.scale[i]=100;
+   stat.ready=true; stat.calibrated=true; stat.horizon=4; stat.asof=bars[39].time;
+   stat.dl[0]=0.7; stat.dl[1]=0.2; stat.dl[2]=0.1; stat.brier_dl=0.4; stat.brier_baseline=0.6;
+   Check("calibrated current DNN contributes its directional probability difference",
+      ICTAnalyticalDeepVote(model,stat,bars,PERIOD_M5,PERIOD_M5,asof,0.01,v) && MathAbs(v.value[ICT_A_DEEP]-0.5)<1e-9);
+   Check("DNN from a different timeframe is excluded",
+      !ICTAnalyticalDeepVote(model,stat,bars,PERIOD_H1,PERIOD_M5,asof,0.01,v) && !v.available[ICT_A_DEEP]);
+   stat.asof-=300;
+   Check("stale DNN is excluded",!ICTAnalyticalDeepVote(model,stat,bars,PERIOD_M5,PERIOD_M5,asof,0.01,v));
+   stat.asof+=600;
+   Check("future DNN is excluded",!ICTAnalyticalDeepVote(model,stat,bars,PERIOD_M5,PERIOD_M5,asof,0.01,v));
+   stat.asof=bars[39].time; model.calibrated=false;
+   Check("uncalibrated DNN is excluded",!ICTAnalyticalDeepVote(model,stat,bars,PERIOD_M5,PERIOD_M5,asof,0.01,v));
+   model.calibrated=true; stat.brier_dl=0.6;
+   Check("DNN must beat baseline in its own metric",!ICTAnalyticalDeepVote(model,stat,bars,PERIOD_M5,PERIOD_M5,asof,0.01,v));
+   SICTAnalyticalDeepState advisory=new SICTAnalyticalDeepState();
+   Check("calibrated non-winning DNN is explicitly experimental in early mode",
+      ICTAnalyticalDeepEvidence(model,stat,bars,PERIOD_M5,PERIOD_M5,asof,0.01,advisory,v) &&
+      advisory.ready && !advisory.validated && advisory.weight==0.35);
+   stat.brier_dl=0.4; model.test_end=asof;
+   Check("future evaluation labels cannot admit DNN",!ICTAnalyticalDeepVote(model,stat,bars,PERIOD_M5,PERIOD_M5,asof,0.01,v));
+   Check("early experimental mode still rejects future evaluation labels",
+      !ICTAnalyticalDeepEvidence(model,stat,bars,PERIOD_M5,PERIOD_M5,asof,0.01,advisory,v));
+   model.test_end=bars[30].time; model.mean[0]=1000000; model.scale[0]=1;
+   Check("result_out of domain features cannot admit DNN",!ICTAnalyticalDeepVote(model,stat,bars,PERIOD_M5,PERIOD_M5,asof,0.01,v));
+   Check("early domain warning is explicit and receives experimental weight",
+      ICTAnalyticalDeepEvidence(model,stat,bars,PERIOD_M5,PERIOD_M5,asof,0.01,advisory,v) && !advisory.domain_ok && !advisory.validated);
+   model.mean[0]=0; model.scale[0]=100; stat.dl[2]=0.9;
+   Check("invalid probability mass cannot admit DNN",!ICTAnalyticalDeepVote(model,stat,bars,PERIOD_M5,PERIOD_M5,asof,0.01,v));
+   Check("early experimental mode never accepts invalid probability mass",
+      !ICTAnalyticalDeepEvidence(model,stat,bars,PERIOD_M5,PERIOD_M5,asof,0.01,advisory,v));
+   SICTRangeSnapshot r=new SICTRangeSnapshot(); ZeroMemory(r); r.symbol="TEST"; r.valid=true; r.as_of=asof; r.ltf=PERIOD_M5;
+   r.liquidity_event_count=1; r.liquidity_events[0].side=-1; r.liquidity_events[0].type=IR_EVENT_LIQUIDITY_SWEEP;
+   r.liquidity_events[0].confirmed_at=asof;
+   ZeroMemory(v); ICTAnalyticalLiquidityVote(r,"TEST",asof,PERIOD_M5,12,v);
+   Check("native SSL reclaim supports bullish analysis",v.available[ICT_A_LIQUIDITY] && v.value[ICT_A_LIQUIDITY]==1);
+   r.liquidity_event_count=2; r.liquidity_events[1].side=1;
+   r.liquidity_events[1].type=IR_EVENT_LIQUIDITY_SWEEP; r.liquidity_events[1].confirmed_at=asof;
+   ICTAnalyticalLiquidityVote(r,"TEST",asof,PERIOD_M5,12,v);
+   Check("simultaneous opposing native events cancel",v.value[ICT_A_LIQUIDITY]==0);
+   r.liquidity_event_count=1; r.liquidity_events[0].confirmed_at=asof+1;
+   ICTAnalyticalLiquidityVote(r,"TEST",asof,PERIOD_M5,12,v);
+   Check("future native evt cannot support analysis",v.value[ICT_A_LIQUIDITY]==0);
+   r.as_of--; ZeroMemory(v); ICTAnalyticalLiquidityVote(r,"TEST",asof,PERIOD_M5,12,v);
+   Check("stale native liquidity is missing rather than neutral",!v.available[ICT_A_LIQUIDITY]);
+   r.as_of=asof; r.range.id="R"; r.zone_count=1; r.zones[0].range_id="R";
+   r.zones[0].direction=1; r.zones[0].lower=bars[39].low; r.zones[0].upper=bars[39].close;
+   r.zones[0].quality=80; r.zones[0].state=IR_FRESH; r.zones[0].confirmed_at=bars[38].time;
+   ZeroMemory(v); ICTAnalyticalRangeZonesVote(r,"TEST",asof,bars[39],atr,v);
+   Check("closed reaction to an available native zone supports analysis",v.available[ICT_A_ZONES] && v.value[ICT_A_ZONES]>0.8);
+   double zone_score=v.value[ICT_A_ZONES]; r.zone_count=2;
+   r.zones[1].range_id="R"; r.zones[1].direction=1; r.zones[1].lower=bars[39].low; r.zones[1].upper=bars[39].close;
+   r.zones[1].quality=80; r.zones[1].state=IR_FRESH; r.zones[1].confirmed_at=bars[38].time;
+   ICTAnalyticalRangeZonesVote(r,"TEST",asof,bars[39],atr,v);
+   Check("duplicated zones do not multiply a family vote",MathAbs(v.value[ICT_A_ZONES]-zone_score)<1e-9);
+   r.zone_count=1; r.zones[0].state=IR_ZONE_INVALIDATED; ICTAnalyticalRangeZonesVote(r,"TEST",asof,bars[39],atr,v);
+   Check("invalidated zones do not support analysis",v.value[ICT_A_ZONES]==0);
+   r.zones[0].state=IR_FRESH; r.zones[0].confirmed_at=asof;
+   ICTAnalyticalRangeZonesVote(r,"TEST",asof,bars[39],atr,v);
+   Check("zone created at the reaction close cannot be a prior retest",v.value[ICT_A_ZONES]==0);
+   SICTUnifiedSnapshot u=new SICTUnifiedSnapshot(); ZeroMemory(u); u.valid=true; u.symbol="TEST"; u.asof=asof;
+   u.layer_count=1; u.layers[0].last_close=asof; u.comparison1="PEER";
+   u.layers[0].peers[0].comparison="PEER"; u.layers[0].peers[0].last_close=asof;
+   u.layers[0].peers[0].ready=true; u.layers[0].peers[0].relation_known=true;
+   u.layers[0].peers[0].state=ICT_SMT_PEER_BEARISH;
+   ZeroMemory(v); ICTAnalyticalUnifiedVotes(u,bars[39],atr,v);
+   Check("opposite SMT remains negative evidence",v.available[ICT_A_SMT] && v.value[ICT_A_SMT]==-1);
+   u.layers[0].peers[0].ready=false; ZeroMemory(v); ICTAnalyticalUnifiedVotes(u,bars[39],atr,v);
+   Check("unavailable SMT is not counted as no divergence",!v.available[ICT_A_SMT]);
+  }
+public static void RunICTAnalyticalFixtures() { TestAnalyticalConsensus(); TestAnalyticalCausalityAndDeep(); TestAnalyticalEarlyPolicy(); }
+
+public static void TestAnalyticalEarlyPolicy() {
+   SICTAnalyticalContext c=new SICTAnalyticalContext(); SICTAnalyticalVotes v=new SICTAnalyticalVotes(); AnalyticalFixture(c,v);
+   SICTAnalyticalPolicy p=new SICTAnalyticalPolicy(); ICTAnalyticalPolicyDefaults(p); SICTAnalyticalResult result=new SICTAnalyticalResult();
+   SICTAnalyticalDeepState deep=new SICTAnalyticalDeepState(); ZeroMemory(deep); deep.ready=true; deep.validated=true; deep.domain_ok=true;
+   deep.weight=1; deep.direction=1; deep.probability[0]=0.6; deep.probability[1]=0.2; deep.probability[2]=0.2;
+   v.available[ICT_A_DEEP]=true; v.value[ICT_A_DEEP]=0.4;
+   Check("early defaults request actual DL with a lower advisory threshold",ICTAnalyticalPolicyValid(p) && p.require_deep &&
+      p.minimum_score==55 && p.minimum_groups==2 && p.minimum_supporters==1);
+   Check("current trained DL plus price produces analysis",ICTAnalyticalEvaluateEarly(p,c,v,deep,result) && result.deep_used);
+   c.htf_bias=0; c.mtf_bias=0;
+   Check("neutral native MTF can accompany explicitly early DL",ICTAnalyticalEvaluateEarly(p,c,v,deep,result) && !result.context_aligned);
+   Check("strict native context still rejects the same neutral tiers",!ICTAnalyticalContextReady(c));
+   c.htf_bias=1; c.mtf_bias=-1;
+   Check("conflicting MTF is disclosed rather than preventing all DL analysis",ICTAnalyticalEvaluateEarly(p,c,v,deep,result) &&
+      !result.context_aligned && StringFind(result.reason,"chưa xác nhận")>=0);
+   p.strict_context=true;
+   Check("optional strict early mode keeps the original MTF veto",!ICTAnalyticalEvaluateEarly(p,c,v,deep,result));
+   p.strict_context=false; c.mtf_closed=0; c.htf_closed=0; c.htf_bias=0; c.mtf_bias=0;
+   Check("missing upper structure does not pretend alignment",ICTAnalyticalEvaluateEarly(p,c,v,deep,result) && !result.context_aligned);
+   c.htf_closed=c.asof+1;
+   Check("future upper timestamps still reject early analysis",!ICTAnalyticalEvaluateEarly(p,c,v,deep,result));
+   c.htf_closed=0; c.ltf_closed=c.asof-1;
+   Check("stale LTF still rejects early analysis",!ICTAnalyticalEvaluateEarly(p,c,v,deep,result));
+   c.ltf_closed=c.asof; deep.ready=false;
+   Check("required DL cannot be replaced by technical heuristics",!ICTAnalyticalEvaluateEarly(p,c,v,deep,result));
+   deep.ready=true; deep.direction=0;
+   Check("neutral dominant DNN does not become a directional arrow",!ICTAnalyticalEvaluateEarly(p,c,v,deep,result));
+   deep.direction=1; v.value[ICT_A_DEEP]=0.03;
+   Check("nearly tied DNN directions remain a watch state",!ICTAnalyticalEvaluateEarly(p,c,v,deep,result));
+   v.value[ICT_A_DEEP]=0.4; deep.validated=false; deep.weight=0.35;
+   Check("experimental DL is explicitly identified",ICTAnalyticalEvaluateEarly(p,c,v,deep,result) && result.experimental);
+   double experimental_score=result.score; deep.validated=true; deep.weight=1;
+   ICTAnalyticalEvaluateEarly(p,c,v,deep,result);
+   Check("experimental evidence receives a score discount",experimental_score<result.score);
+   deep.validated=false; deep.weight=0.35; p.allow_experimental=false;
+   Check("experimental DL can be excluded without changing native rules",!ICTAnalyticalEvaluateEarly(p,c,v,deep,result));
+   p.allow_experimental=true; v.value[ICT_A_PATH]=-0.8; v.value[ICT_A_CANDLE]=-0.5;
+   Check("price opposition still defeats a weak experimental DNN",!ICTAnalyticalEvaluateEarly(p,c,v,deep,result));
+   v.value[ICT_A_PATH]=0.8; v.value[ICT_A_CANDLE]=0.5; v.value[ICT_A_LIQUIDITY]=0; v.value[ICT_A_ZONES]=0;
+   ICTAnalyticalEvaluateEarly(p,c,v,deep,result); double neutral_score=result.score;
+   v.available[ICT_A_LIQUIDITY]=false; v.available[ICT_A_ZONES]=false;
+   ICTAnalyticalEvaluateEarly(p,c,v,deep,result);
+   Check("observed no-evt groups do not dilute directional evidence",MathAbs(result.score-neutral_score)<1e-9 && result.groups==3);
+   Check("early analysis never alters the original context",c.htf_bias==0 && c.mtf_bias==0 && c.asof==100300);
   }
 
 
@@ -4363,20 +6342,29 @@ public static string ICTPositionMoneyPercent(double value,SICTPositionRiskSnapsh
    string pct=(ICTPositionCapitalValid(s.capital) ? DoubleToString(ICTPositionPercent(value,s.capital),2)+"%" : "chưa có vốn hợp lệ");
    return ICTPositionMoney(value,s,signed_value)+" ("+pct+")";
   }
-public static string ICTPositionRiskStatus(SICTPositionRiskSnapshot s) {
+public static string ICTPositionRiskStatus(SICTPositionRiskSnapshot s,double portfolio_limit=3.0) {
+   if(!s.connected) return "MẤT KẾT NỐI — KIỂM TRA TÀI KHOẢN";
    if(s.selection_errors>0) return "ĐANG ĐỒNG BỘ VỊ THẾ";
-   if(s.totals.count==0) return "CHƯA CÓ VỊ THẾ";
+   if(!ICTPositionCapitalValid(s.capital)) return "VỐN KHÔNG HỢP LỆ";
    if(s.totals.unknown_stops>0) return "RỦI RO CHƯA XÁC ĐỊNH ĐỦ";
+   if(s.unknown_pending>0) return "LỆNH CHỜ THIẾU SL / ĐỊNH GIÁ";
+   if(s.totals.count==0 && s.pending_count==0) return "CHƯA CÓ VỊ THẾ";
+   double exposure=MathMax(s.totals.risk_money,s.totals.remaining_risk_money)+s.pending_risk_money;
+   if(portfolio_limit>0.0 && ICTPositionPercent(exposure,s.capital)>portfolio_limit)
+      return "VƯỢT NGÂN SÁCH RỦI RO";
    return "RỦI RO SL: "+ICTPositionMoneyPercent(s.totals.risk_money,s);
   }
 public static string ICTPositionRiskBody(SICTPositionRiskSnapshot s) {
    string body="[TỔNG QUAN VỊ THẾ]\nPhạm vi: "+(s.symbol_filter=="" ? "Toàn tài khoản" : s.symbol_filter)+
       " | "+IntegerToString(s.totals.count)+" vị thế\n";
-   body+="Vốn tính %: "+(s.capital_mode==ICT_POSITION_EQUITY ? "Equity " : "Balance ")+ICTPositionMoney(s.capital,s)+"\n";
+   body+="Vốn tính %: "+(s.capital_mode==ICT_POSITION_EQUITY ? "Equity " :
+      s.capital_mode==ICT_POSITION_CONSERVATIVE ? "min(Balance, Equity) " : "Balance ")+ICTPositionMoney(s.capital,s)+"\n";
    body+="Balance "+ICTPositionMoney(s.balance,s)+" | Equity "+ICTPositionMoney(s.equity,s)+"\n";
    if(!s.connected) body+="MẤT KẾT NỐI: giá/vị thế có thể chưa cập nhật\n";
    if(s.selection_errors>0) body+="Đang đồng bộ vị thế: chưa đọc được "+IntegerToString(s.selection_errors)+" mục\n";
-   if(s.totals.count==0)
+   body+="Lệnh chờ: "+IntegerToString(s.pending_count)+" | rủi ro đã tính "+ICTPositionMoney(s.pending_risk_money,s)+
+      (s.unknown_pending>0 ? " (chưa đầy đủ; thiếu SL/định giá)" : "")+"\n";
+   if(s.totals.count==0 && s.pending_count==0)
       return body+"Bảng tự cập nhật sau khi mở lệnh thủ công hoặc bằng EA.\n";
    body+=(s.totals.unknown_stops>0 || s.selection_errors>0 ? "Rủi ro SL đã tính (chưa đầy đủ): " : "Tổng rủi ro tới SL: ")+
       ICTPositionMoneyPercent(s.totals.risk_money,s)+"\n";
@@ -4387,6 +6375,10 @@ public static string ICTPositionRiskBody(SICTPositionRiskSnapshot s) {
    body+="Lãi/lỗ thả nổi: "+ICTPositionMoneyPercent(s.totals.floating,s,true)+
       (s.totals.unknown_floating>0 || s.selection_errors>0 ? " (chưa đầy đủ)" : "")+"\n";
    body+="Thả nổi gồm swap, chưa trừ commission.\n";
+   body+="Có thể giảm thêm tới SL: "+ICTPositionMoneyPercent(s.totals.remaining_risk_money,s)+
+      (s.totals.unknown_stops>0 || s.totals.unknown_floating>0 || s.selection_errors>0 ? " (chưa đầy đủ)" : "")+"\n";
+   body+="P/L ngày TK = deal BUY/SELL hôm nay (gồm phí) + floating hiện tại: "+
+      (s.daily_valid ? ICTPositionMoneyPercent(s.daily_net,s,true) : "CHƯA XÁC ĐỊNH")+"\n";
    body+="P/L tại SL/TP tính từ giá vào thực tế.\n";
    body+="SL/TP dự kiến gồm swap, trừ phí + dự phòng "+ICTPositionMoney(s.cost_per_lot,s)+"/lot.\n";
    body+="Chỉ tính khối lượng còn mở; không cộng phần đã chốt.\n";
@@ -4407,6 +6399,130 @@ public static string ICTPositionRiskBody(SICTPositionRiskSnapshot s) {
       body+="R:R dự kiến "+(r.rr_valid ? "1:"+DoubleToString(r.rr,2) : "--")+"\n";
      }
    return body;
+  }
+public static string ICTPositionCompactMoney(double money,SICTPositionRiskSnapshot s,bool signed_value=false) {
+   if(!MathIsValidNumber(money)) return "CHƯA XÁC ĐỊNH";
+   return (ICTPositionCapitalValid(s.capital) ? DoubleToString(ICTPositionPercent(money,s.capital),2)+"% | " : "--% | ")+
+      (signed_value && money>0.0 ? "+" : "")+DoubleToString(money,s.currency_digits);
+  }
+public static int ICTPositionWorstIndex(SICTPositionRiskSnapshot s) {
+   int worst=-1; double largest=-1.0;
+   for(int i=0;i<ArraySize(s.positions);i++)
+     {
+      SICTPositionRisk r=s.positions[i];
+      if(!r.valid || !r.stop_valid || !r.floating_valid) return i;
+      double amount=MathMax(r.risk_money,r.remaining_risk_money);
+      if(amount>largest) { largest=amount; worst=i; }
+     }
+   return worst;
+  }
+public static string ICTPositionSummaryLabel(int row) {
+   switch(row)
+     {
+      case 0: return "Bảo vệ tự động";
+      case 1: return "P/L đang mở";
+      case 2: return "Rủi ro SL + chờ";
+      case 3: return "Có thể giảm thêm";
+      case 4: return "P/L ngày TK*";
+      case 5: return "Risk ngày + chờ";
+      case 6: return "Dư địa sau SL*";
+      case 7: return "Margin / Equity";
+      case 8: return "Balance / Equity";
+      case 9: return "Vị thế / lệnh chờ";
+      case 10: return "Vị thế rủi ro nhất";
+      case 11: return "Trần lệnh / ngày";
+     }
+   return "";
+  }
+public static string ICTPositionSummaryValue(SICTPositionRiskSnapshot s,int row,double portfolio_limit,double daily_limit,double per_trade_limit=3.0,bool cumulative=true) {
+   bool incomplete=s.selection_errors>0 || s.totals.unknown_stops>0 || s.unknown_pending>0;
+   switch(row)
+     {
+      case 0:
+         if(!s.connected) return "MẤT KẾT NỐI";
+         if(!s.protection_online) return "OFFLINE";
+         if(s.protection_state!=0) return "ĐÃ KHÓA TÀI KHOẢN";
+         if(!s.protection_armed) return "CHƯA BẬT TỰ ĐỘNG";
+         return s.protection_healthy ? "ĐANG GIÁM SÁT" : "LỖI / THIẾU QUYỀN";
+      case 1: return (s.selection_errors>0 || s.totals.unknown_floating>0 ? "CHƯA ĐỦ | " : "")+
+         ICTPositionCompactMoney(s.totals.floating,s,true);
+      case 2: return (incomplete ? "CHƯA ĐỦ | " : "")+
+         ICTPositionCompactMoney(s.totals.risk_money+s.pending_risk_money,s);
+      case 3: return (incomplete || s.totals.unknown_floating>0 ? "CHƯA ĐỦ | " : "")+
+         ICTPositionCompactMoney(s.totals.remaining_risk_money+s.pending_risk_money,s);
+      case 4: return s.daily_valid ? ICTPositionCompactMoney(s.daily_net,s,true) : "CHƯA ĐỦ LỊCH SỬ";
+      case 5:
+         return !s.daily_opened_valid ? "CHƯA ĐỦ SL BAN ĐẦU" :
+            (s.selection_errors>0 || s.unknown_pending>0 ? "CHƯA ĐỦ | " : "")+
+            ICTPositionCompactMoney(s.daily_opened_risk_money+s.pending_risk_money,s);
+      case 6:
+         if(daily_limit<=0.0) return "GIỚI HẠN NGÀY ĐANG TẮT";
+         if(s.symbol_filter!="") return "CẦN XEM TOÀN TÀI KHOẢN";
+         if(incomplete || s.totals.unknown_floating>0 || !s.daily_valid || !ICTPositionCapitalValid(s.capital) ||
+            (cumulative && !s.daily_opened_valid))
+            return "CHƯA XÁC ĐỊNH";
+         return ICTPositionCompactMoney(MathMax(0.0,MathMin(s.capital*daily_limit/100.0+s.daily_net-
+            s.totals.remaining_risk_money-s.pending_risk_money,cumulative ?
+            s.capital*daily_limit/100.0-s.daily_opened_risk_money-s.pending_risk_money : DBL_MAX)),s);
+      case 7: return s.margin_valid && ICTPositionCapitalValid(s.equity) ?
+         DoubleToString(ICTPositionPercent(s.margin,s.equity),1)+"% | trống "+DoubleToString(s.free_margin,s.currency_digits) : "CHƯA XÁC ĐỊNH";
+      case 8: return DoubleToString(s.balance,s.currency_digits)+" / "+DoubleToString(s.equity,s.currency_digits);
+      case 9: return IntegerToString(s.totals.count)+" / "+IntegerToString(s.pending_count)+
+         (s.symbol_filter=="" ? " | toàn TK" : " | "+s.symbol_filter);
+      case 10:
+        {
+         int index=ICTPositionWorstIndex(s);
+         if(index<0) return "--";
+         SICTPositionRisk r=s.positions[index];
+         return r.position.symbol+" #"+IntegerToString((long)r.position.ticket)+
+            (!r.stop_valid || !r.floating_valid || !r.valid ? " | THIẾU SL / DỮ LIỆU" : " | "+
+            (ICTPositionCapitalValid(s.capital) ? DoubleToString(ICTPositionPercent(MathMax(r.risk_money,r.remaining_risk_money),s.capital),2)+"%" : "--%"));
+        }
+      case 11: return (per_trade_limit>0.0 ? DoubleToString(per_trade_limit,2)+"%" : "TẮT")+" / "+
+         (daily_limit>0.0 ? DoubleToString(daily_limit,2)+"%" : "TẮT");
+     }
+   return "";
+  }
+public static int ICTPositionSummarySeverity(SICTPositionRiskSnapshot s,int row,double portfolio_limit,double daily_limit,bool cumulative=true) {
+   bool incomplete=!s.connected || s.selection_errors>0 || !ICTPositionCapitalValid(s.capital) ||
+      !MathIsValidNumber(s.totals.risk_money) || !MathIsValidNumber(s.totals.remaining_risk_money) ||
+      !MathIsValidNumber(s.pending_risk_money);
+   if(row==0) return (!s.connected || !s.protection_online || s.protection_state!=0 ||
+      (s.protection_armed && !s.protection_healthy) ? 3 : s.protection_armed ? 1 : 2);
+   if(row==1) return incomplete || s.totals.unknown_floating>0 ? 3 : s.totals.floating<0.0 ? 3 : s.totals.floating>0.0 ? 1 : 0;
+   if(row==2 || row==3)
+     {
+      if(incomplete || s.totals.unknown_stops>0 || s.unknown_pending>0 || (row==3 && s.totals.unknown_floating>0)) return 3;
+      double amount=(row==2 ? s.totals.risk_money : s.totals.remaining_risk_money)+s.pending_risk_money;
+      double used=ICTPositionPercent(amount,s.capital);
+      return portfolio_limit<=0.0 ? 2 : used>portfolio_limit ? 3 : used>=portfolio_limit*0.8 ? 2 : 0;
+     }
+   if(row==4) return incomplete || !s.daily_valid ? 3 : s.daily_net<0.0 ? 3 : s.daily_net>0.0 ? 1 : 0;
+   if(row==5)
+     {
+      if(incomplete || !s.daily_opened_valid || s.unknown_pending>0) return cumulative ? 3 : 2;
+      double spent=ICTPositionPercent(s.daily_opened_risk_money+s.pending_risk_money,s.capital);
+      return spent>=daily_limit ? 3 : spent>=daily_limit*0.8 ? 2 : 0;
+     }
+   if(row==6)
+     {
+      if(incomplete || !s.daily_valid || s.totals.unknown_stops>0 || s.unknown_pending>0 || s.totals.unknown_floating>0 ||
+         (cumulative && !s.daily_opened_valid)) return 3;
+      if(daily_limit<=0.0 || s.symbol_filter!="") return 2;
+      double room=s.capital*daily_limit/100.0+s.daily_net-s.totals.remaining_risk_money-s.pending_risk_money;
+      if(cumulative) room=MathMin(room,s.capital*daily_limit/100.0-s.daily_opened_risk_money-s.pending_risk_money);
+      return room<=0.0 ? 3 : room<s.capital*daily_limit/100.0*0.25 ? 2 : 0;
+     }
+   if(row==7) return !s.margin_valid || !ICTPositionCapitalValid(s.equity) ? 3 :
+      s.margin/s.equity>=1.0/3.0 ? 3 : s.margin/s.equity>=0.20 ? 2 : 0;
+   if(row==10)
+     {
+      int index=ICTPositionWorstIndex(s);
+      if(index>=0 && (!s.positions[index].valid || !s.positions[index].stop_valid || !s.positions[index].floating_valid)) return 3;
+      if(index>=0 && ICTPositionPercent(MathMax(s.positions[index].risk_money,s.positions[index].remaining_risk_money),s.capital)>3.0) return 3;
+     }
+   if(row==11 && (portfolio_limit<=0.0 || daily_limit<=0.0)) return 2;
+   return 0;
   }
 public static string ICTUnifiedTF(int tf) { if(tf==PERIOD_CURRENT) return "--"; string value=EnumToString(tf); StringReplace(ref value,"PERIOD_",""); return value; }
 public static string ICTUnifiedBias(SICTTierSnapshot tier) {
@@ -4435,7 +6551,7 @@ public static string ICTStrongOBDetails(SICTStrongOrderBlock z) {
       " Xu hướng "+IntegerToString(z.bias_points)+" PD "+IntegerToString(z.pd_points)+" Mới "+IntegerToString(z.freshness_points)+
       "\n"+ICTDashboardText(z.gate_reason)+(z.invalidation_reason!="" ? " | "+ICTDashboardText(z.invalidation_reason) : "");
   }
-public static string ICTUnifiedDashboardBody(SICTUnifiedSnapshot s,string decision,string plan,string reason) {
+public static string ICTUnifiedDashboardBody(SICTUnifiedSnapshot s,string decision,string plan,string reason,string research_advisory="") {
    string body="[BỐI CẢNH ĐA KHUNG]\nChế độ: "+(s.frames.mode==ICT_MTF_AUTO ? "Tự động" : "Thủ công")+
       " | "+(s.frames.status==ICT_MTF_FULL ? "3 khung" : s.frames.status==ICT_MTF_TWO_TIER ? "2 khung" : "1 khung")+"\n";
    body+="Khung hiển thị vùng: "+ICTUnifiedTF(g_ict_chart_zone_tf)+" | số vùng trùng đã ẩn: "+
@@ -4448,14 +6564,15 @@ public static string ICTUnifiedDashboardBody(SICTUnifiedSnapshot s,string decisi
       else if(s.tiers[i].reason!="") body+=" | "+ICTDashboardText(s.tiers[i].reason);
       body+="\n";
      }
-   body+="MTF: "+ICTUnifiedStructureText(s.mtf_state)+"\n"+ICTDashboardText(s.reason)+"\n[QUYẾT ĐỊNH HTF / MTF / LTF]\n";
+   body+="MTF: "+ICTUnifiedStructureText(s.mtf_state)+"\n"+ICTDashboardText(s.reason)+"\n";
+   body+=research_advisory+"[QUYẾT ĐỊNH HTF / MTF / LTF]\n";
    SICTSignalResult signal=s.signal;
    bool shared=signal.symbol==s.symbol && signal.asof==s.asof && signal.asof>0;
    if(shared)
      {
       body+=ICTDashboardSignalState(signal.state)+" | "+TimeToString(signal.asof,TIME_DATE|TIME_MINUTES)+"\n";
-      
-      
+
+
       bool data_gate=signal.data_ready && signal.frames.status==ICT_MTF_FULL;
       bool context_gate=data_gate && (signal.direction==1 || signal.direction==-1) && signal.htf_pass && signal.mtf_pass;
       bool trigger_gate=context_gate && signal.ltf_pass && signal.trigger_bar>0 &&
@@ -4632,6 +6749,10 @@ public static void RunUnifiedDiagnosticFixtures() {
    s.signal.symbol=s.symbol; s.signal.asof=s.asof; s.signal.frames.status=ICT_MTF_FULL;
    s.signal.reason="DATA INSUFFICIENT";
    string body=ICTUnifiedDashboardBody(s,"","","");
+   string ordered=ICTUnifiedDashboardBody(s,"","","","[ANALYSIS]\n");
+   Check("multi timeframe context precedes research even when signal data is missing",
+      StringFind(ordered,"[BỐI CẢNH ĐA KHUNG]")==0 && StringFind(ordered,"[ANALYSIS]")>0 &&
+      StringFind(ordered,"[ANALYSIS]")<StringFind(ordered,"[QUYẾT ĐỊNH HTF / MTF / LTF]"));
    Check("downstream gates not labeled failed on missing data",StringFind(body,"HTF Chưa đánh giá / MTF Chưa đánh giá")>=0 &&
       StringFind(body,"Tín hiệu LTF: Chưa đánh giá")>=0 && StringFind(body,"Rủi ro Chưa đánh giá")>=0);
    s.signal.data_ready=true; s.signal.direction=1; s.signal.htf_pass=true; s.signal.mtf_pass=false;
@@ -4664,8 +6785,8 @@ public static void RunUnifiedDiagnosticFixtures() {
    s.signal.confirmed=true; s.signal.reason="confirmed";
    body=ICTUnifiedDashboardBody(s,"","","");
    Check("confirmed result shows risk pass",StringFind(body,"Mục tiêu Đạt / Rủi ro Đạt")>=0);
-   
-   
+
+
    s.signal.entry=100; s.signal.stop=100; s.signal.tp1=103; s.signal.rr=3;
    s.signal.risk_pass=true; s.signal.smt_required=false;
    bool result=ICTEvaluateSignal(s.signal,2);

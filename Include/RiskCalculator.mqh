@@ -24,7 +24,7 @@ bool CalculateRisk(const string symbol,const ENUM_RM_DIRECTION direction,
       !MathIsValidNumber(commission_round_turn_per_lot) ||
       !MathIsValidNumber(cost_buffer_per_lot) || !MathIsValidNumber(slippage_points) ||
       reference_capital<=0.0 || risk_percent<=0.0 || max_risk_percent<=0.0 ||
-      risk_percent>max_risk_percent || minimum_rr<2.0 ||
+      risk_percent>max_risk_percent || max_risk_percent>3.0 || minimum_rr<2.0 ||
       commission_round_turn_per_lot<0.0 || cost_buffer_per_lot<0.0 ||
       slippage_points<0.0 || max_quote_age_seconds<=0)
      { result.reason="Invalid risk inputs"; return false; }

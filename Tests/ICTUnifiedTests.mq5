@@ -4,12 +4,14 @@
 #include "../Include/ICTRangeEngine.mqh"
 #include "../Include/ICTUnifiedDecisionAdapter.mqh"
 #include "../Include/ICTUnifiedRenderer.mqh"
+#include "../Include/ICTAnalyticalConsensus.mqh"
 int failures=0,checks=0;
 void Check(const string name,const bool value)
   { checks++; if(!value) failures++; Print(name,value ? " PASS" : " FAIL"); }
 #include "ICTUnifiedCoreFixtures.mqh"
 #include "ICTUnifiedDiagnosticFixtures.mqh"
 #include "ICTRejectionBreakerFixtures.mqh"
+#include "ICTAnalyticalFixtures.mqh"
 void TestChartLayout()
   {
    Check("default chart font is 75 percent rounded",ICTChartScaledFontSize(10)==8);
@@ -131,6 +133,7 @@ int OnInit()
   {
    RunUnifiedCoreFixtures();
    RunUnifiedDiagnosticFixtures();
+   RunICTAnalyticalFixtures();
    TestICTRejectionBreakerDetectors();
    TestChartLayout();
    TestDashboardVietnamese();

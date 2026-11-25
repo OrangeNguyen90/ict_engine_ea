@@ -206,7 +206,8 @@ void SmartSLTPProcess(const SICTDecision &current,const double max_risk,const do
       double adverse=item.plan.sl-direction*slippage_points*v.point;
       if(volume<=0 || adverse<=0 || !OrderCalcProfit(side,_Symbol,volume,v.entry,adverse,loss) ||
          !OrderCalcProfit(side,_Symbol,volume,v.entry,item.plan.tp,reward) ||
-         !SRMPValidatePositionPlanRisk(loss,reward,cost_per_lot*volume,reference,max_risk,min_rr,reason))
+         !SRMPValidatePositionPlanRisk(loss,reward,cost_per_lot*volume,
+            ICTConservativeRiskCapital(reference,AccountInfoDouble(ACCOUNT_BALANCE),AccountInfoDouble(ACCOUNT_EQUITY)),max_risk,min_rr,reason))
         { PrintFormat("Smart SLTP: ticket %I64u blocked: risk %s",ticket,reason); continue; }
       MqlTradeRequest req={}; MqlTradeCheckResult check={}; MqlTradeResult result={};
       req.action=TRADE_ACTION_SLTP; req.position=ticket; req.symbol=_Symbol; req.sl=item.plan.sl; req.tp=item.plan.tp;

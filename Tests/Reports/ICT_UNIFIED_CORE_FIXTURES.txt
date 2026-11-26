@@ -1,6 +1,6 @@
 Production pure MQL algorithms and dashboard diagnostics executed through mechanical C# syntax adaptation (fixed clock, zero chart prices).
 NOT a MetaTrader runtime test or market backtest.
-UTC: 2026-11-24T04:12:37.6627469Z
+UTC: 2026-11-26T02:20:16.9055682Z
 ICTTimeframeMapper.mqh SHA256=C37D5FC59D797B2D230B8199A8FEAF38330670315B80F4E704F105510E15617D
 ICTSignalResult.mqh SHA256=0434CA6451FFA82019E59C18F683304619D8F577B3D5391D09364C22C0C3BE1E
 MarketStructure.mqh SHA256=A2EC1D46D4452C2664C942B199D822F90768EE36551B5A4C96D7F84913244291
@@ -367,6 +367,8 @@ invalid zero candidate risk is rejected PASS
 risk sum overflow fails closed PASS
 no positions shows an explicit waiting state PASS
 live risk panel shows actual ticket and money percentages PASS
+risk summary shows RR for the highest-risk open position PASS
+risk summary uses five distinct headline metrics PASS
 cost treatment and actual entry basis are visible in risk panel PASS
 armed healthy protection has an explicit monitored state PASS
 a fresh heartbeat alone does not imply automatic protection PASS
@@ -645,4 +647,4 @@ experimental DL can be excluded without changing native rules PASS
 price opposition still defeats a weak experimental DNN PASS
 observed no-evt groups do not dilute directional evidence PASS
 early analysis never alters the original context PASS
-ICTCoreFixtures RESULT checks=616 failures=0
+ICTCoreFixtures RESULT checks=618 failures=0

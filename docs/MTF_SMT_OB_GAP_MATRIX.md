@@ -1,3 +1,4 @@
+- Hai EA DecisionSupport/Smart dùng bảng rủi ro một trang với **5 dòng chính**: bảo vệ, P/L mở, rủi ro SL + pending, P/L ngày, vị thế rủi ro nhất kèm RR ròng. Các số liệu chi tiết và RR từng vé tiếp tục có trong tooltip; dữ liệu thiếu hiển thị rõ, không suy đoán. Nền xen kẽ; đỏ cho lỗi/âm/thiếu dữ liệu, vàng cho cảnh báo, xanh cho lời/bảo vệ đang giám sát. Mặc định 420 × tối đa 420 px; tự giảm font, không phân trang.
 # Đối chiếu MASTER PROMPT MTF / SMT / Strong OB
 
 ## Dashboard rủi ro một trang và trần 3% / 6% — 24/11/2026, bản 1.11

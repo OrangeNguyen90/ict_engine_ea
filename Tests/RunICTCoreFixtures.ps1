@@ -88,7 +88,8 @@ $source+="`n"+(Get-MqlFunction $localization 'ICTDashboardText')
 $renderer=Get-Content -LiteralPath (Join-Path $project 'Include\ICTUnifiedRenderer.mqh') -Raw -Encoding UTF8
 $positionRenderer=Get-Content -LiteralPath (Join-Path $project 'Include\ICTPositionRiskRenderer.mqh') -Raw -Encoding UTF8
 foreach($name in @('ICTPositionMoney','ICTPositionMoneyPercent','ICTPositionRiskStatus','ICTPositionRiskBody',
-   'ICTPositionCompactMoney','ICTPositionWorstIndex','ICTPositionSummaryLabel','ICTPositionSummaryValue','ICTPositionSummarySeverity')) {
+    'ICTPositionCompactMoney','ICTPositionWorstIndex','ICTPositionSummaryLabel','ICTPositionSummaryCount',
+    'ICTPositionSummaryMetric','ICTPositionSummaryValue','ICTPositionSummarySeverity')) {
     $source+="`n"+(Get-MqlFunction $positionRenderer $name)
 }
 foreach($name in @('ICTUnifiedTF','ICTUnifiedBias','ICTUnifiedStructureText','ICTDashboardSignalState',

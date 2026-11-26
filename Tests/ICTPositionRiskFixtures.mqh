@@ -179,6 +179,13 @@ void TestLivePositionRiskDisplay()
    Check("live risk panel shows actual ticket and money percentages",
       StringFind(body,"#123")>=0 && StringFind(body,"107.00 USD (1.07%)")>=0 &&
       StringFind(body,"+243.00 USD (2.43%)")>=0 && StringFind(body,"+23.00 USD (0.23%)")>=0);
+   Check("risk summary shows RR for the highest-risk open position",
+      StringFind(ICTPositionSummaryValue(s,10,3,6),"RR 1:2.27")>=0);
+   Check("risk summary uses five distinct headline metrics",
+      ICTPositionSummaryCount()==5 && ICTPositionSummaryMetric(0)==0 &&
+      ICTPositionSummaryMetric(1)==1 && ICTPositionSummaryMetric(2)==2 &&
+      ICTPositionSummaryMetric(3)==4 && ICTPositionSummaryMetric(4)==10 &&
+      ICTPositionSummaryMetric(5)==-1);
    Check("cost treatment and actual entry basis are visible in risk panel",
       StringFind(body,"chưa trừ commission")>=0 && StringFind(body,"giá vào thực tế")>=0 && StringFind(body,"10.00 USD/lot")>=0);
    s.symbol_filter=""; s.protection_online=true; s.protection_armed=true; s.protection_healthy=true;

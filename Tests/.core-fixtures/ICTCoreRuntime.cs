@@ -1,7 +1,7 @@
 using System;
 using System.Reflection;
 using System.Text;
-public static class ICTCoreRuntime_99776ce725d949c68a8d6fb520c13d17 {
+public static class ICTCoreRuntime_aa3f69ce7ea543ccb0a45ba36b8a289b {
  public const double DBL_MAX=double.MaxValue;
  public static double ICTNumber(object value){return Convert.ToDouble(value,System.Globalization.CultureInfo.InvariantCulture);}
  public const int PERIOD_CURRENT=0,PERIOD_M1=1,PERIOD_M2=2,PERIOD_M3=3,PERIOD_M4=4,PERIOD_M5=5,PERIOD_M6=6,PERIOD_M10=10,PERIOD_M12=12,PERIOD_M15=15,PERIOD_M20=20,PERIOD_M30=30;
@@ -5348,6 +5348,13 @@ public static void TestLivePositionRiskDisplay() {
    Check("live risk panel shows actual ticket and money percentages",
       StringFind(body,"#123")>=0 && StringFind(body,"107.00 USD (1.07%)")>=0 &&
       StringFind(body,"+243.00 USD (2.43%)")>=0 && StringFind(body,"+23.00 USD (0.23%)")>=0);
+   Check("risk summary shows RR for the highest-risk open position",
+      StringFind(ICTPositionSummaryValue(s,10,3,6),"RR 1:2.27")>=0);
+   Check("risk summary uses five distinct headline metrics",
+      ICTPositionSummaryCount()==5 && ICTPositionSummaryMetric(0)==0 &&
+      ICTPositionSummaryMetric(1)==1 && ICTPositionSummaryMetric(2)==2 &&
+      ICTPositionSummaryMetric(3)==4 && ICTPositionSummaryMetric(4)==10 &&
+      ICTPositionSummaryMetric(5)==-1);
    Check("cost treatment and actual entry basis are visible in risk panel",
       StringFind(body,"chưa trừ commission")>=0 && StringFind(body,"giá vào thực tế")>=0 && StringFind(body,"10.00 USD/lot")>=0);
    s.symbol_filter=""; s.protection_online=true; s.protection_armed=true; s.protection_healthy=true;
@@ -6434,6 +6441,20 @@ public static string ICTPositionSummaryLabel(int row) {
      }
    return "";
   }
+public static int ICTPositionSummaryCount() {
+    return 5;
+   }
+public static int ICTPositionSummaryMetric(int row) {
+    switch(row)
+       {
+         case 0: return 0;
+         case 1: return 1;
+         case 2: return 2;
+         case 3: return 4;
+         case 4: return 10;
+       }
+    return -1;
+   }
 public static string ICTPositionSummaryValue(SICTPositionRiskSnapshot s,int row,double portfolio_limit,double daily_limit,double per_trade_limit=3.0,bool cumulative=true) {
    bool incomplete=s.selection_errors>0 || s.totals.unknown_stops>0 || s.unknown_pending>0;
    switch(row)
@@ -6476,7 +6497,8 @@ public static string ICTPositionSummaryValue(SICTPositionRiskSnapshot s,int row,
          SICTPositionRisk r=s.positions[index];
          return r.position.symbol+" #"+IntegerToString((long)r.position.ticket)+
             (!r.stop_valid || !r.floating_valid || !r.valid ? " | THIẾU SL / DỮ LIỆU" : " | "+
-            (ICTPositionCapitalValid(s.capital) ? DoubleToString(ICTPositionPercent(MathMax(r.risk_money,r.remaining_risk_money),s.capital),2)+"%" : "--%"));
+            (ICTPositionCapitalValid(s.capital) ? DoubleToString(ICTPositionPercent(MathMax(r.risk_money,r.remaining_risk_money),s.capital),2)+"%" : "--%"))+
+            (r.rr_valid ? " | RR 1:"+DoubleToString(r.rr,2) : " | RR --");
         }
       case 11: return (per_trade_limit>0.0 ? DoubleToString(per_trade_limit,2)+"%" : "TẮT")+" / "+
          (daily_limit>0.0 ? DoubleToString(daily_limit,2)+"%" : "TẮT");

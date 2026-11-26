@@ -1,3 +1,5 @@
+Năm dòng chính: bảo vệ tự động, P/L đang mở, rủi ro SL + chờ, P/L ngày và vị thế rủi ro nhất kèm RR ròng. Các chỉ số portfolio còn lại, giá vào, SL/TP và RR từng vé nằm trong tooltip; RR không hợp lệ hoặc thiếu dữ liệu hiển thị `RR --`.
+Mặc định 420 × tối đa 420 px. Font tự giảm khi cần; cửa sổ quá thấp ưu tiên các dòng đầu và ghi rõ số mục đang hiện, không tạo trang thứ hai. Bảng chính chỉ giữ năm chỉ số khác ý nghĩa để tránh lặp; các thông tin chi tiết xem bằng tooltip. Nếu chọn một symbol, bảng ghi rõ phạm vi và không suy ra dư địa toàn tài khoản từ dữ liệu một phần. Thiếu SL/định giá phải hiện **CHƯA ĐỦ**, không đổi thành 0% rủi ro.
 # Kiểm soát rủi ro cho tài khoản thật
 
 Cập nhật 24/11/2026 — DecisionSupport / Smart 1.11, Auto Trader 1.31.

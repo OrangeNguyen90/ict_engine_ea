@@ -117,6 +117,24 @@ string ICTPositionSummaryLabel(const int row)
    return "";
   }
 
+int ICTPositionSummaryCount()
+   {
+    return 5;
+   }
+
+int ICTPositionSummaryMetric(const int row)
+   {
+    switch(row)
+       {
+         case 0: return 0;
+         case 1: return 1;
+         case 2: return 2;
+         case 3: return 4;
+         case 4: return 10;
+       }
+    return -1;
+   }
+
 string ICTPositionSummaryValue(const SICTPositionRiskSnapshot &s,const int row,
                                  const double portfolio_limit,const double daily_limit,
                                  const double per_trade_limit=3.0,const bool cumulative=true)
@@ -162,7 +180,8 @@ string ICTPositionSummaryValue(const SICTPositionRiskSnapshot &s,const int row,
          SICTPositionRisk r=s.positions[index];
          return r.position.symbol+" #"+IntegerToString((long)r.position.ticket)+
             (!r.stop_valid || !r.floating_valid || !r.valid ? " | THIẾU SL / DỮ LIỆU" : " | "+
-            (ICTPositionCapitalValid(s.capital) ? DoubleToString(ICTPositionPercent(MathMax(r.risk_money,r.remaining_risk_money),s.capital),2)+"%" : "--%"));
+            (ICTPositionCapitalValid(s.capital) ? DoubleToString(ICTPositionPercent(MathMax(r.risk_money,r.remaining_risk_money),s.capital),2)+"%" : "--%"))+
+            (r.rr_valid ? " | RR 1:"+DoubleToString(r.rr,2) : " | RR --");
         }
       case 11: return (per_trade_limit>0.0 ? DoubleToString(per_trade_limit,2)+"%" : "TẮT")+" / "+
          (daily_limit>0.0 ? DoubleToString(daily_limit,2)+"%" : "TẮT");
@@ -263,7 +282,7 @@ void ICTRenderPositionRiskPanel(const string prefix,const SICTPositionRiskSnapsh
       size--;
      }
    while(true);
-   int visible=(int)MathMin(12,MathMax(1,(h-header-footer)/line));
+   int visible=(int)MathMin(ICTPositionSummaryCount(),MathMax(1,(h-header-footer)/line));
    h=header+visible*line+footer;
    if(bottom && moved_y<0) py=(int)MathMax(0,ch-y-h);
    py=(int)MathMax(0,MathMin(py,ch-h));
@@ -279,12 +298,13 @@ void ICTRenderPositionRiskPanel(const string prefix,const SICTPositionRiskSnapsh
       status_level==3 ? C'255,139,146' : status_level==2 ? C'255,208,112' : C'138,199,255',true,status);
    int label_width=(int)MathMin(155,MathMax(114,w*0.40));
    string detail=ICTPositionRiskBody(s);
-   for(int i=0;i<12;i++)
+    for(int i=0;i<12;i++)
      {
       string suffix=IntegerToString(i);
       if(i>=visible)
         { ObjectDelete(0,prefix+"band_"+suffix); ObjectDelete(0,prefix+"label_"+suffix); ObjectDelete(0,prefix+"value_"+suffix); continue; }
-      int severity=ICTPositionSummarySeverity(s,i,portfolio_limit,daily_limit,cumulative);
+         int metric=ICTPositionSummaryMetric(i);
+         int severity=ICTPositionSummarySeverity(s,metric,portfolio_limit,daily_limit,cumulative);
       color bg=(i%2==0 ? C'27,34,45' : C'33,42,55');
       color ink=C'230,237,247';
       if(severity==1) { bg=C'21,58,46'; ink=C'121,239,180'; }
@@ -294,19 +314,19 @@ void ICTRenderPositionRiskPanel(const string prefix,const SICTPositionRiskSnapsh
       RMPanelLeft(prefix+"band_"+suffix,px+1,top,w-2,line);
       ObjectSetInteger(0,prefix+"band_"+suffix,OBJPROP_BGCOLOR,bg);
       ObjectSetInteger(0,prefix+"band_"+suffix,OBJPROP_COLOR,bg);
-      string label=ICTPositionSummaryLabel(i),value=ICTPositionSummaryValue(s,i,portfolio_limit,daily_limit,per_trade_limit,cumulative);
+         string label=ICTPositionSummaryLabel(metric),value=ICTPositionSummaryValue(s,metric,portfolio_limit,daily_limit,per_trade_limit,cumulative);
       string tip=label+": "+value+"\n"+detail;
-      if(i==4 || i==6) tip="* Deal BUY/SELL từ 00:00 giờ broker + toàn bộ floating hiện tại. Gồm phí deal; không phải drawdown Equity từ đầu ngày.\n"+tip;
-      if(i==5) tip="Tổng rủi ro SL ban đầu + dự phòng phí của deal mở hôm nay, kể cả đã chốt lời, cộng lệnh chờ. Thiếu lịch sử SL ban đầu thì chưa xác định. Gate cộng dồn: "+(cumulative ? "BẬT" : "TẮT")+".\n"+tip;
-      if(i==3) tip="Ước tính có thể giảm thêm từ floating hiện tại tới SL, gồm dự phòng phí; lãi đã khóa tại SL không triệt tiêu phần lời có thể trả lại.\n"+tip;
-      if(i==7) tip="Margin/Equity; cảnh báo từ 20%, nghiêm trọng từ 33,33%. Đây là ngưỡng hiển thị, không tự đóng lệnh.\n"+tip;
-      if(i==11) tip="Trần tổng rủi ro đồng thời: "+DoubleToString(portfolio_limit,2)+"%; mục tiêu/lệnh có thể thấp hơn trần.\n"+tip;
+         if(metric==4 || metric==6) tip="* Deal BUY/SELL từ 00:00 giờ broker + toàn bộ floating hiện tại. Gồm phí deal; không phải drawdown Equity từ đầu ngày.\n"+tip;
+         if(metric==5) tip="Tổng rủi ro SL ban đầu + dự phòng phí của deal mở hôm nay, kể cả đã chốt lời, cộng lệnh chờ. Thiếu lịch sử SL ban đầu thì chưa xác định. Gate cộng dồn: "+(cumulative ? "BẬT" : "TẮT")+".\n"+tip;
+         if(metric==3) tip="Ước tính có thể giảm thêm từ floating hiện tại tới SL, gồm dự phòng phí; lãi đã khóa tại SL không triệt tiêu phần lời có thể trả lại.\n"+tip;
+         if(metric==7) tip="Margin/Equity; cảnh báo từ 20%, nghiêm trọng từ 33,33%. Đây là ngưỡng hiển thị, không tự đóng lệnh.\n"+tip;
+         if(metric==11) tip="Trần tổng rủi ro đồng thời: "+DoubleToString(portfolio_limit,2)+"%; mục tiêu/lệnh có thể thấp hơn trần.\n"+tip;
       ICTPositionSummaryText(prefix+"label_"+suffix,label,px+10,top+3,label_width-14,size,C'192,207,225',i<=5,tip);
       ICTPositionSummaryText(prefix+"value_"+suffix,value,px+label_width,top+3,w-label_width-10,size,ink,i<=5 || severity>=2,tip);
      }
    string note=s.currency+" | "+(s.capital_mode==ICT_POSITION_CONSERVATIVE ? "% theo min(Bal,Eq)" :
       s.capital_mode==ICT_POSITION_EQUITY ? "% theo Equity" : "% theo Balance")+
-      (visible<12 ? " | cửa sổ nhỏ: "+IntegerToString(visible)+"/12 mục" : " | rê chuột xem chi tiết");
+      " | 5 mục chính; rê chuột xem chi tiết";
    ICTPositionSummaryText(prefix+"note",note,px+10,py+h-footer+3,w-20,8,C'163,183,207',false,detail);
    ICTPanelButton(prefix+"eye","👁","Ẩn bảng rủi ro",px+10,py+10,34,26,13);
    ObjectSetString(0,prefix+"eye",OBJPROP_FONT,"Segoe UI Emoji");
